@@ -8,6 +8,7 @@ import colorama
 from termcolor import colored
 from asciitree import LeftAligned
 from asciitree.drawing import BoxStyle, BOX_LIGHT
+from src.loader import get_doc_summaries
 
 # import agentops
 # import litellm
@@ -28,46 +29,10 @@ def main(src_path, dst_path, auto_yes=False):
         "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"
     )
 
-    reader = SimpleDirectoryReader(input_dir=src_path)
-    documents = reader.load_data()
-    doc_dicts = [{"content": d.text, **d.metadata} for d in documents]
-
-    PROMPT = f"""
-The following is a list of file contents, along with their metadata. For each file, provide a summary of the contents.
-
-{doc_dicts}
-
-Return a JSON list with the following schema:
-
-```json
-{{
-    "files": [
-    {{
-        "filename": "name of the file",
-        "summary": "summary of the content"
-    }}
-    ]
-}}
-```
-    """.strip()
-
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "system",
-                "content": "Always return JSON. Do not include any other text or formatting characters.",
-            },
-            {"role": "user", "content": PROMPT},
-        ],
-        model="llama3-70b-8192",
-        response_format={"type": "json_object"},
-    )
-
-    summaries = json.loads(chat_completion.choices[0].message.content)["files"]
+    summaries = get_doc_summaries(src_path)
 
     for summary in summaries:
-        print(colored(summary["filename"], "green"))  # Print the filename in green
+        print(colored(summary["file_name"], "green"))  # Print the filename in green
         print(summary["summary"])  # Print the summary of the contents
         print("-" * 80 + "\n")  # Print a separator line with spacing for readability
 
@@ -93,6 +58,7 @@ Use the following JSON schema for your response:
 
 """.strip()
 
+    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
     chat_completion = client.chat.completions.create(
         messages=[
             {

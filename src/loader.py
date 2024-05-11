@@ -6,23 +6,23 @@ import ollama
 from groq import Groq
 
 
-def get_doc_summaries(path: str) -> List[Dict[str, str, str, str, str, str]]:
+def get_doc_summaries(path: str):
     doc_dicts = load_documents(path)
     metadata = process_metadata(doc_dicts)
-    
+
     summaries = query_summaries(doc_dicts)
-    
+
     file_summaries = merge_summary_documents(summaries, metadata)
-    
+
     return file_summaries
 
     # [
     #     {
-    #         file_path: 
+    #         file_path:
     #         file_name:
-    #         file_size: 
-    #         content: 
-    #         summary: 
+    #         file_size:
+    #         content:
+    #         summary:
     #         creation_date:
     #         last_modified_date:
     #     }
@@ -51,28 +51,27 @@ def query_summaries(doc_dicts):
     client = Groq(
         api_key=os.environ.get("GROQ_API_KEY"),
     )
-    
+
     PROMPT = f"""
-    The following is a list of file contents, along with their metadata. For each file, provide a summary of the contents.
-    The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary.
-    Try to make the summary as specific to the file as possible.
+The following is a list of file contents, along with their metadata. For each file, provide a summary of the contents.
+The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary.
+Try to make the summary as specific to the file as possible.
 
-    {doc_dicts}
+{doc_dicts}
 
-    Return a JSON list with the following schema:
+Return a JSON list with the following schema:
 
-    ```json
+```json
+{{
+"files": [
     {{
-    "files": [
-        {{
-        "file_path": "path to the file including name",
-        "summary": "summary of the content"
-        }}
-    ]
+    "file_path": "path to the file including name",
+    "summary": "summary of the content"
     }}
-    ```
+]
+}}
+```
     """.strip()
-    
 
     chat_completion = client.chat.completions.create(
         messages=[
@@ -100,8 +99,12 @@ def merge_summary_documents(summaries, metadata_list):
     for item in summaries:
         list_summaries[item["file_path"]].append(item["summary"])
 
-    file_summaries = {path: '. '.join(summaries) for path, summaries in list_summaries.items()}
+    file_summaries = {
+        path: ". ".join(summaries) for path, summaries in list_summaries.items()
+    }
 
-    file_list = [{"summary": file_summaries[file["file_path"]], **file} for file in metadata_list]
-    
+    file_list = [
+        {"summary": file_summaries[file["file_path"]], **file} for file in metadata_list
+    ]
+
     return file_list
