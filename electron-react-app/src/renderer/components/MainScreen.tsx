@@ -1,11 +1,11 @@
 import { Button } from '@nextui-org/button';
-import FileIcon from './FileIcon';
-import FolderIcon from './FolderIcon';
-import LayoutGridIcon from './LayoutGridIcon';
-import ListIcon from './ListIcon';
-import PlusIcon from './PlusIcon';
-import UploadIcon from './UploadIcon';
-import ListOrderedIcon from './ListOrderedIcon';
+import FileIcon from './Icons/FileIcon';
+import FolderIcon from './Icons/FolderIcon';
+import LayoutGridIcon from './Icons/LayoutGridIcon';
+import ListIcon from './Icons/ListIcon';
+import PlusIcon from './Icons/PlusIcon';
+import UploadIcon from './Icons/UploadIcon';
+import ListOrderedIcon from './Icons/ListOrderedIcon';
 
 function MainScreen() {
   // Add the className 'dark' to main div to enable dark mode
