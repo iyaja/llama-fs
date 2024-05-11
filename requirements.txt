@@ -4,3 +4,10 @@ llama-index
 litellm
 groq
 docx2txt
+colorama
+termcolor
+click
+asciitree
+# agentops
+# langchain
+# langchain_core

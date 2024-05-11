@@ -191,3 +191,7 @@ electron-react-app/npm-debug.log.*
 electron-react-app/*.css.d.ts
 electron-react-app/*.sass.d.ts
 electron-react-app/*.scss.d.ts
+
+
+# Custom
+test_dir/

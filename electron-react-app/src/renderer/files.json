@@ -1,0 +1,48 @@
+{
+  "files": [
+    {
+      "name": "Documents",
+      "children": [
+        {
+          "name": "Document.pdf"
+        }
+      ]
+    },
+    {
+      "name": "Presentation.pptx"
+    },
+    {
+      "name": "Images",
+      "children": [
+        {
+          "name": "Image1.jpg"
+        },
+        {
+          "name": "Image2.png"
+        }
+      ]
+    },
+    {
+      "name": "Music",
+      "children": [
+        {
+          "name": "Song1.mp3"
+        },
+        {
+          "name": "Song2.mp3"
+        }
+      ]
+    },
+    {
+      "name": "Videos",
+      "children": [
+        {
+          "name": "Video1.mp4"
+        },
+        {
+          "name": "Video2.mov"
+        }
+      ]
+    }
+  ]
+}
