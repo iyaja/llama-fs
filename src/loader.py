@@ -52,40 +52,33 @@ def query_summaries(doc_dicts):
         api_key=os.environ.get("GROQ_API_KEY"),
     )
 
-    PROMPT = f"""
-The following is a list of file contents, along with their metadata. For each file, provide a summary of the contents.
+    PROMPT = """
+You will be provided with a list of file contents, along with their metadata. For each file, provide a summary of the contents.
 The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary.
 Try to make the summary as specific to the file as possible.
 
-{doc_dicts}
-
-Return a JSON list with the following schema:
+Your response must be a JSON object with the following schema:
 
 ```json
-{{
-"files": [
-    {{
-    "file_path": "path to the file including name",
-    "summary": "summary of the content"
-    }}
-]
-}}
+{
+    "files": [
+        {
+        "file_path": "path to the file including name",
+        "summary": "summary of the content"
+        }
+    ]
+}
 ```
     """.strip()
 
     chat_completion = client.chat.completions.create(
         messages=[
-            {
-                "role": "system",
-                "content": "Always return JSON. Do not include any other text or formatting characters.",
-            },
-            {
-                "role": "user",
-                "content": PROMPT,
-            },
+            {"role": "system", "content": PROMPT},
+            {"role": "user", "content": json.dumps(doc_dicts)},
         ],
-        model="llama3-70b-8192",
+        model="llama3-8b-8192",
         response_format={"type": "json_object"},
+        temperature=0,
     )
 
     summaries = json.loads(chat_completion.choices[0].message.content)["files"]
