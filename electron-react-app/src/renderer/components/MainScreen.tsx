@@ -6,8 +6,29 @@ import ListIcon from './Icons/ListIcon';
 import PlusIcon from './Icons/PlusIcon';
 import UploadIcon from './Icons/UploadIcon';
 import ListOrderedIcon from './Icons/ListOrderedIcon';
+import files from '../files.json';
+import FileLine from './FileLine';
+
+function preorderTraversal(
+  node: { name: string; children?: any[] },
+  depth: number,
+  result: { name: string; depth: number }[] = [],
+) {
+  result.push({ name: node.name, depth });
+
+  if (node.children) {
+    node.children.forEach((child) => {
+      preorderTraversal(child, depth + 1, result);
+    });
+  }
+
+  return result;
+}
 
 function MainScreen() {
+  // console.log(files);
+  const preOrderedFiles = preorderTraversal(files, -1).slice(1);
+  // console.log(preOrderedFiles);
   // Add the className 'dark' to main div to enable dark mode
   return (
     <div className="flex h-screen w-full">
@@ -44,102 +65,13 @@ function MainScreen() {
           </div>
         </div>
         <div className="flex-1 overflow-auto p-4 space-y-2">
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-4 flex items-center gap-4">
-              <FolderIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Documents
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow pl-8">
-            <div className="p-4 flex items-center gap-4">
-              <FileIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Document.pdf
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow pl-8">
-            <div className="p-4 flex items-center gap-4">
-              <FileIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Presentation.pptx
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-4 flex items-center gap-4">
-              <FolderIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Images
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow pl-8">
-            <div className="p-4 flex items-center gap-4">
-              <FileIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Image1.jpg
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow pl-8">
-            <div className="p-4 flex items-center gap-4">
-              <FileIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Image2.png
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-4 flex items-center gap-4">
-              <FolderIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Music
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow pl-8">
-            <div className="p-4 flex items-center gap-4">
-              <FileIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Song1.mp3
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow pl-8">
-            <div className="p-4 flex items-center gap-4">
-              <FileIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Song2.mp3
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-4 flex items-center gap-4">
-              <FolderIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Videos
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow pl-8">
-            <div className="p-4 flex items-center gap-4">
-              <FileIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Video1.mp4
-              </span>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow pl-8">
-            <div className="p-4 flex items-center gap-4">
-              <FileIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                Video2.mov
-              </span>
-            </div>
-          </div>
+          {preOrderedFiles.map((file) => (
+            <FileLine
+              key={file.name}
+              filename={file.name}
+              indentation={file.depth}
+            />
+          ))}
         </div>
       </div>
     </div>
