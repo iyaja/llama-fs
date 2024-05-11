@@ -158,3 +158,36 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# -----------------------------
+# Electron
+# -----------------------------
+# Logs
+electron-react-app/logs
+electron-react-app/*.log
+
+# Runtime data
+electron-react-app/pids
+electron-react-app/*.pid
+electron-react-app/*.seed
+
+# Coverage directory used by tools like istanbul
+electron-react-app/coverage
+electron-react-app/.eslintcache
+
+# Dependency directory
+# https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
+electron-react-app/node_modules
+
+# OSX
+.DS_Store
+
+electron-react-app/release/app/dist
+electron-react-app/release/build
+electron-react-app/.erb/dll
+
+electron-react-app/.idea
+electron-react-app/npm-debug.log.*
+electron-react-app/*.css.d.ts
+electron-react-app/*.sass.d.ts
+electron-react-app/*.scss.d.ts
