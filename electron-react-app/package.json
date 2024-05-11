@@ -96,6 +96,7 @@
     }
   },
   "dependencies": {
+    "@nextui-org/button": "^2.0.31",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.4.8",
     "electron-updater": "^6.1.4",
