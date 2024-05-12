@@ -45,7 +45,7 @@ function preorderTraversal(
 function buildTree(paths) {
   const root = { name: 'root', children: [] };
 
-  paths.forEach(({ dst_path }) => {
+  paths.forEach(({ dst_path, summary }) => {
     const parts = dst_path.split('/');
     let currentLevel = root.children;
 
@@ -54,8 +54,8 @@ function buildTree(paths) {
 
       if (!existingPath) {
         if (index === parts.length - 1) {
-          // It's a file
-          existingPath = { name: part };
+          // It's a file, include the summary
+          existingPath = { name: part, summary: summary };
         } else {
           // It's a directory
           existingPath = { name: part, children: [] };
@@ -73,6 +73,7 @@ function buildTree(paths) {
 }
 
 function MainScreen() {
+  const [watchMode, setWatchMode] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePath, setFilePath] = useState('');
 
@@ -83,12 +84,7 @@ function MainScreen() {
 
   const [preOrderedFiles, setPreOrderedFiles] = useState([]);
   // const preOrderedFiles = preorderTraversal(files, '', -1).slice(1);
-  const [acceptedState, setAcceptedState] = React.useState(
-    preOrderedFiles.reduce(
-      (acc, file) => ({ ...acc, [file.fullfilename]: false }),
-      {},
-    ),
-  );
+  const [acceptedState, setAcceptedState] = React.useState([]);
 
   const handleBatch = async () => {
     const response = await fetch('http://localhost:8000/batch', {
@@ -96,12 +92,16 @@ function MainScreen() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ path: filePath }),
+      body: JSON.stringify({
+        // path: filePath
+        path: '/Users/reibs/Projects/llama-fs/sample_data'
+      }),
     });
     const data = await response.json();
+    console.log('DATA!!')
+    console.log(data)
     const treeData = buildTree(data);
     const preOrderedTreeData = preorderTraversal(treeData, '', -1).slice(1);
-    console.log(treeData);
     setPreOrderedFiles(preOrderedTreeData);
     setAcceptedState(
       preOrderedTreeData.reduce(
@@ -110,6 +110,7 @@ function MainScreen() {
       ),
     );
   };
+  console.log(watchMode)
 
   // Add the className 'dark' to main div to enable dark mode
   return (
@@ -138,7 +139,9 @@ function MainScreen() {
             <Button variant="ghost" onClick={() => handleBatch()}>
               <WandIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             </Button>
-            <TelescopeButton isLoading />
+            <div onClick={() => setWatchMode(!!!watchMode)}>
+              <TelescopeButton isLoading={watchMode} />
+            </div>
           </div>
         </div>
         <div className="flex-1 flex">
@@ -165,6 +168,11 @@ function MainScreen() {
             {/* This container will be populated with content dynamically based on the selected FileLine */}
           </div>
         </div>
+      </div>
+      <div className="flex-1">
+        <button className="bg-gray-400 text-white w-full rounded p-4">
+          Accept
+        </button>
       </div>
     </div>
   );

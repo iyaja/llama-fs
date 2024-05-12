@@ -4,7 +4,7 @@ import './telescope.css';
 
 function TelescopeButton(props: any) {
   return (
-    <Button variant="ghost" className="relative">
+    <div className="relative">
       <TelescopeIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
       {props.isLoading && (
         <svg
@@ -20,12 +20,11 @@ function TelescopeButton(props: any) {
             rx="5"
             fill="none"
             strokeWidth="2"
-            // strokeDasharray="80 20"
             strokeLinecap="round"
           />
         </svg>
       )}
-    </Button>
+    </div>
   );
 }
 export default TelescopeButton;
