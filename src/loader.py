@@ -32,6 +32,7 @@ def get_doc_summaries(path: str):
     #     }
     # ]
 
+
 # @weave.op()
 # @agentops.record_function("load")
 def load_documents(path: str):
@@ -40,6 +41,7 @@ def load_documents(path: str):
     documents = reader.load_data()
     doc_dicts = [{"content": d.text, **d.metadata} for d in documents]
     return doc_dicts
+
 
 # @weave.op()
 # @agentops.record_function("metadata")
@@ -52,6 +54,7 @@ def process_metadata(doc_dicts):
             metadata_list.append(doc)
     return metadata_list
 
+
 # @weave.op()
 # @agentops.record_function("query")
 def query_summaries(doc_dicts):
@@ -63,23 +66,18 @@ def query_summaries(doc_dicts):
     print("Summarizing documents ...")
     for doc in doc_dicts:
         print("Processing {}".format(doc["file_path"]))
-        PROMPT = f"""
-The following contains file contents, along with their metadata. For a file, provide a summary of the contents.
-The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary.
-Try to make the summary as specific to the file as possible.
-
-{doc}
+        PROMPT = """
+You will be provided with the contents of a file along with its metadata. Provide a summary of the contents. The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary. Make the summary as specific to the file as possible.
 
 Return a JSON list with the following schema:
 
 ```json
-{{
+{
     "file_path": "path to the file including name",
     "summary": "summary of the content"
-}}
+}
 ```
 """.strip()
-
 
         max_retries = 5
         attempt = 0
@@ -87,14 +85,8 @@ Return a JSON list with the following schema:
             try:
                 chat_completion = client.chat.completions.create(
                     messages=[
-                        {
-                            "role": "system",
-                            "content": "Always return JSON. Do not include any other text or formatting characters.",
-                        },
-                        {
-                            "role": "user",
-                            "content": PROMPT,
-                        },
+                        {"role": "system", "content": PROMPT},
+                        {"role": "user", "content": json.dumps(doc)},
                     ],
                     model="llama3-8b-8192",
                     response_format={"type": "json_object"},
@@ -109,6 +101,7 @@ Return a JSON list with the following schema:
         summaries.append(summary)
 
     return summaries
+
 
 # @weave.op()
 # @agentops.record_function("merge")
