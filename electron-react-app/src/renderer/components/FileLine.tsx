@@ -51,50 +51,78 @@ function FileLine({
   }
   // weird paddingleft is a hack as pl is not working always
   return (
-    <div
-      className={`${acceptedState[fullfilename] ? 'bg-green-500' : 'bg-white'} dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow`}
-      style={{
-        paddingLeft: `${indentation * 20}px`,
-      }}
-    >
-      <div className="p-4 flex items-center gap-4">
-        {iconComponent}
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-          {filename}
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setAcceptedState((prevState: any) => {
-                const newState = { ...prevState };
-                Object.keys(newState).forEach((key) => {
-                  if (key.startsWith(fullfilename)) {
-                    newState[key] = true;
-                  }
-                });
-                return newState;
-              });
-            }}
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: `${indentation > 1 ? indentation * 20 : 0}px`,
+
+    }}>
+      {indentation > 0
+        &&
+        <div
+          style={{
+            marginLeft: '10px'
+          }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-7 w-7 text-gray-200 dark:text-gray-200"
+            fill="none"
+            viewBox="0 0 15 15"
+            stroke="currentColor"
           >
-            <CheckIcon className="h-5 w-5 text-green-500" />
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setAcceptedState((prevState: any) => {
-                const newState = { ...prevState };
-                Object.keys(newState).forEach((key) => {
-                  if (key.startsWith(fullfilename)) {
-                    newState[key] = false;
-                  }
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 3v7h7"
+            />
+          </svg>
+        </div>
+      }
+      <div
+        className={`${acceptedState[fullfilename] ? 'bg-green-500' : 'bg-white'} dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700 mx-2`}
+      >
+        <div className="p-4 flex items-center gap-4">
+          {iconComponent}
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+            {filename}
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setAcceptedState((prevState: any) => {
+                  const newState = { ...prevState };
+                  Object.keys(newState).forEach((key) => {
+                    if (key.startsWith(fullfilename)) {
+                      newState[key] = true;
+                    }
+                  });
+                  return newState;
                 });
-                return newState;
-              });
-            }}
-          >
-            <CrossIcon className="h-5 w-5 text-red-500" />
-          </Button>
+              }}
+            >
+              <CheckIcon className="h-5 w-5 text-green-500" />
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setAcceptedState((prevState: any) => {
+                  const newState = { ...prevState };
+                  Object.keys(newState).forEach((key) => {
+                    if (key.startsWith(fullfilename)) {
+                      newState[key] = false;
+                    }
+                  });
+                  return newState;
+                });
+              }}
+            >
+              <CrossIcon className="h-5 w-5 text-red-500" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
