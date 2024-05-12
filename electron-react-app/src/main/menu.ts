@@ -82,6 +82,29 @@ export default class MenuBuilder {
             app.quit();
           },
         },
+        {
+          label: 'Zoom In',
+          accelerator: 'CmdOrCtrl+=', // For macOS, 'Cmd+=' will work
+          click: () => {
+            const currentZoomLevel = this.mainWindow.webContents.getZoomLevel();
+            this.mainWindow.webContents.setZoomLevel(currentZoomLevel + 1);
+          },
+        },
+        {
+          label: 'Zoom Out',
+          accelerator: 'CmdOrCtrl+-', // For macOS, 'Cmd+-' will work
+          click: () => {
+            const currentZoomLevel = this.mainWindow.webContents.getZoomLevel();
+            this.mainWindow.webContents.setZoomLevel(currentZoomLevel - 1);
+          },
+        },
+        {
+          label: 'Reset Zoom',
+          accelerator: 'CmdOrCtrl+0',
+          click: () => {
+            this.mainWindow.webContents.setZoomLevel(0);
+          },
+        },
       ],
     };
     const subMenuEdit: DarwinMenuItemConstructorOptions = {
@@ -185,7 +208,7 @@ export default class MenuBuilder {
 
     const subMenuView =
       process.env.NODE_ENV === 'development' ||
-      process.env.DEBUG_PROD === 'true'
+        process.env.DEBUG_PROD === 'true'
         ? subMenuViewDev
         : subMenuViewProd;
 
@@ -214,43 +237,43 @@ export default class MenuBuilder {
         label: '&View',
         submenu:
           process.env.NODE_ENV === 'development' ||
-          process.env.DEBUG_PROD === 'true'
+            process.env.DEBUG_PROD === 'true'
             ? [
-                {
-                  label: '&Reload',
-                  accelerator: 'Ctrl+R',
-                  click: () => {
-                    this.mainWindow.webContents.reload();
-                  },
+              {
+                label: '&Reload',
+                accelerator: 'Ctrl+R',
+                click: () => {
+                  this.mainWindow.webContents.reload();
                 },
-                {
-                  label: 'Toggle &Full Screen',
-                  accelerator: 'F11',
-                  click: () => {
-                    this.mainWindow.setFullScreen(
-                      !this.mainWindow.isFullScreen(),
-                    );
-                  },
+              },
+              {
+                label: 'Toggle &Full Screen',
+                accelerator: 'F11',
+                click: () => {
+                  this.mainWindow.setFullScreen(
+                    !this.mainWindow.isFullScreen(),
+                  );
                 },
-                {
-                  label: 'Toggle &Developer Tools',
-                  accelerator: 'Alt+Ctrl+I',
-                  click: () => {
-                    this.mainWindow.webContents.toggleDevTools();
-                  },
+              },
+              {
+                label: 'Toggle &Developer Tools',
+                accelerator: 'Alt+Ctrl+I',
+                click: () => {
+                  this.mainWindow.webContents.toggleDevTools();
                 },
-              ]
+              },
+            ]
             : [
-                {
-                  label: 'Toggle &Full Screen',
-                  accelerator: 'F11',
-                  click: () => {
-                    this.mainWindow.setFullScreen(
-                      !this.mainWindow.isFullScreen(),
-                    );
-                  },
+              {
+                label: 'Toggle &Full Screen',
+                accelerator: 'F11',
+                click: () => {
+                  this.mainWindow.setFullScreen(
+                    !this.mainWindow.isFullScreen(),
+                  );
                 },
-              ],
+              },
+            ],
       },
       {
         label: 'Help',
