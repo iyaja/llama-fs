@@ -1,23 +1,29 @@
 import json
 import os
+import pathlib
+import queue
 from collections import defaultdict
+from pathlib import Path
+from typing import Optional
+import time
 
 import colorama
 import ollama
+import threading
 from asciitree import LeftAligned
 from asciitree.drawing import BOX_LIGHT, BoxStyle
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from groq import Groq
 from llama_index.core import SimpleDirectoryReader
 from pydantic import BaseModel
 from termcolor import colored
+from watchdog.observers import Observer
 
 from src.loader import get_doc_summaries
 from src.tree_generator import create_file_tree
-import pathlib
-from pathlib import Path
-from pydantic import BaseModel
-from typing import Optional
+from src.watch_utils import Handler
+from src.watch_utils import create_file_tree as create_watch_file_tree
 
 os.environ["GROQ_API_KEY"] = "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"
 
@@ -66,3 +72,30 @@ async def batch(request: Request):
         file["summary"] = summaries[files.index(file)]["summary"]
 
     return files
+
+
+@app.post("/watch")
+async def watch(request: Request):
+    path = request.path
+    if not os.path.exists(path):
+        raise HTTPException(status_code=400, detail="Path does not exist in filesystem")
+
+    response_queue = queue.Queue()
+
+    observer = Observer()
+    event_handler = Handler(path, create_watch_file_tree, response_queue)
+    await event_handler.set_summaries()
+    observer.schedule(event_handler, path, recursive=True)
+    observer.start()
+
+    # background_tasks.add_task(observer.start)
+
+    def stream():
+        while True:
+            response = response_queue.get()
+            print(response)
+            yield json.dumps(response) + "\n"
+            # yield json.dumps({"status": "watching"}) + "\n"
+            # time.sleep(5)
+
+    return StreamingResponse(stream())

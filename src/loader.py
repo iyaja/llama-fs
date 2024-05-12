@@ -48,12 +48,14 @@ def load_documents(path: str):
         input_dir=path,
         recursive=True,
         required_exts=[
-            # ".pdf",
+            ".pdf",
             # ".docx",
             # ".py",
-            # ".txt",
+            ".txt",
             # ".md",
-            ".png",
+            # ".png",
+            # ".jpg",
+            # ".jpeg",
             # ".ts",
         ],
     )
@@ -142,7 +144,6 @@ Write your response a JSON object with the following schema:
 """.strip()
 
     client = ollama.AsyncClient()
-    print("Running image summarization")
     chat_completion = await client.chat(
         messages=[
             # {"role": "system", "content": "Respond with one short sentence."},
