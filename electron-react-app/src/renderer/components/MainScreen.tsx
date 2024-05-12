@@ -16,16 +16,19 @@ import TelescopeIcon from './Icons/TelescopeIcon';
 import TelescopeButton from './TelescopeButton';
 import EnterIcon from './Icons/EnterIcon';
 
+
 function preorderTraversal(
-  node: { name: string; children?: any[] },
+  node: { name: string; children?: any[]; summary?: string; src_path?: string },
   prevfilename: string,
   depth: number,
-  result: { filename: string; fullfilename: string; depth: number }[] = [],
+  result: { filename: string; fullfilename: string; depth: number; summary?: string; src_path?: string }[] = [],
 ) {
   result.push({
     filename: node.name,
     fullfilename: `${prevfilename}/${node.name}`,
     depth,
+    summary: node.summary,
+    src_path: node.src_path,
   });
 
   if (node.children) {
@@ -45,7 +48,7 @@ function preorderTraversal(
 function buildTree(paths) {
   const root = { name: 'root', children: [] };
 
-  paths.forEach(({ dst_path, summary }) => {
+  paths.forEach(({ src_path, dst_path, summary }) => {
     const parts = dst_path.split('/');
     let currentLevel = root.children;
 
@@ -54,8 +57,8 @@ function buildTree(paths) {
 
       if (!existingPath) {
         if (index === parts.length - 1) {
-          // It's a file, include the summary
-          existingPath = { name: part, summary: summary };
+          // It's a file, include the summary and source path
+          existingPath = { name: part, summary: summary, src_path: src_path };
         } else {
           // It's a directory
           existingPath = { name: part, children: [] };
@@ -71,6 +74,7 @@ function buildTree(paths) {
 
   return root;
 }
+
 
 function MainScreen() {
   const [watchMode, setWatchMode] = useState(false);
