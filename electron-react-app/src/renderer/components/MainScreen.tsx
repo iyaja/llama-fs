@@ -16,7 +16,9 @@ import TelescopeIcon from './Icons/TelescopeIcon';
 import TelescopeButton from './TelescopeButton';
 import EnterIcon from './Icons/EnterIcon';
 import ollamaWave from '../../../assets/ollama_wave.gif'
+import llamaFsLogo from '../../../assets/llama_fs.png'
 
+const supportedFileTypes = ['.pdf', '.txt', '.png', '.jpg', '.jpeg'];
 
 function preorderTraversal(
   node: { name: string; children?: any[]; summary?: string; src_path?: string },
@@ -198,11 +200,14 @@ function MainScreen() {
         <div className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Input
-              className="flex-1 rounded-lg"
+              className="w-max rounded-lg"
               placeholder="Enter file path"
               type="text"
               onChange={(e) => setFilePath(e.target.value)}
               defaultValue='/Users/reibs/Projects/llama-fs/sample_data'
+              style={{
+                width: '400px',
+              }}
             />
           </div>
           <div className="flex-1" />
@@ -220,13 +225,32 @@ function MainScreen() {
             className="w-1/2 overflow-auto p-4 space-y-2 border-r border-gray-200 dark:border-gray-700"
             style={{ maxHeight: 'calc(100vh - 4rem)' }}
           >
-            {loading && (
+            {loading ? (
+              // Existing loading block
               <div className="flex flex-col items-center">
                 <h2 className="text-lg font-semibold mb-2">Reading and classifying your files...</h2>
-                <div className="flex justify-center" style={{ width: '70%' }}>
+                <div className="flex justify-center" style={{ width: '50%' }}>
                   <img src={ollamaWave} alt="Loading..." style={{ width: '100%' }} />
                 </div>
               </div>
+            ) : preOrderedFiles.length === 0 ? (
+              // Render llamaFsLogo and supported file types when not loading and no files
+              <div className="flex flex-col items-center" style={{ height: '100%' }}>
+                <h1 className="text-lg font-semibold mb-2">Llama-FS</h1>
+                <p>Organize your drive with LLMs. </p>
+                <div className="flex justify-center" style={{ width: '50%' }}>
+                  <img src={llamaFsLogo} alt="Llama FS Logo" style={{ width: '100%' }} />
+                </div>
+                <p className="text-center mt-4">Supported file types:</p>
+                <ul className="list-disc text-center">
+                  {supportedFileTypes.map((type, index) => (
+                    <li key={index}>{type}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              // Existing file details block
+              <FileDetails fileData={selectedFile} />
             )}
             {preOrderedFiles.map((file) => (
               <div onClick={() => handleFileSelect(file)}>
