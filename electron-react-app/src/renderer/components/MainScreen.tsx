@@ -1,6 +1,5 @@
 import { Button } from '@nextui-org/button';
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import FileIcon from './Icons/FileIcon';
 import FolderIcon from './Icons/FolderIcon';
 import LayoutGridIcon from './Icons/LayoutGridIcon';
@@ -11,6 +10,9 @@ import ListOrderedIcon from './Icons/ListOrderedIcon';
 import files from '../files.json';
 import FileLine from './FileLine';
 import FileDetails from './FileDetails';
+import WandIcon from './Icons/WandIcon';
+import TelescopeIcon from './Icons/TelescopeIcon';
+import TelescopeButton from './TelescopeButton';
 
 function preorderTraversal(
   node: { name: string; children?: any[] },
@@ -47,14 +49,14 @@ function MainScreen() {
   };
 
   const preOrderedFiles = preorderTraversal(files, '', -1).slice(1);
-  console.log(preOrderedFiles);
+  // console.log(preOrderedFiles);
   const [acceptedState, setAcceptedState] = React.useState(
     preOrderedFiles.reduce(
       (acc, file) => ({ ...acc, [file.fullfilename]: false }),
       {},
     ),
   );
-  console.log(acceptedState);
+  // console.log(acceptedState);
 
   // Add the className 'dark' to main div to enable dark mode
   return (
@@ -80,21 +82,22 @@ function MainScreen() {
           </div>
           <div className="flex-1" />
           <div className="flex items-center gap-2">
-            <Button variant="ghost">
+            {/* <Button variant="ghost">
               <ListOrderedIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-            </Button>
+            </Button> */}
             <Button variant="ghost">
-              <UploadIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <WandIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             </Button>
-            <Button variant="ghost">
-              <PlusIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-            </Button>
+            <TelescopeButton isLoading />
           </div>
         </div>
         <div className="flex-1 flex">
-          <div className="w-1/2 overflow-auto p-4 space-y-2 border-r border-gray-200 dark:border-gray-700" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
+          <div
+            className="w-1/2 overflow-auto p-4 space-y-2 border-r border-gray-200 dark:border-gray-700"
+            style={{ maxHeight: 'calc(100vh - 4rem)' }}
+          >
             {preOrderedFiles.map((file) => (
-              <div onClick={() => handleFileSelect(file)} >
+              <div onClick={() => handleFileSelect(file)}>
                 <FileLine
                   key={file.fullfilename}
                   filename={file.filename}
