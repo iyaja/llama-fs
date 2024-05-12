@@ -1,4 +1,5 @@
 import { Button } from '@nextui-org/button';
+import React from 'react';
 import FileIcon from './Icons/FileIcon';
 import FolderIcon from './Icons/FolderIcon';
 import LayoutGridIcon from './Icons/LayoutGridIcon';
@@ -11,14 +12,24 @@ import FileLine from './FileLine';
 
 function preorderTraversal(
   node: { name: string; children?: any[] },
+  prevfilename: string,
   depth: number,
-  result: { name: string; depth: number }[] = [],
+  result: { filename: string; fullfilename: string; depth: number }[] = [],
 ) {
-  result.push({ name: node.name, depth });
+  result.push({
+    filename: node.name,
+    fullfilename: `${prevfilename}/${node.name}`,
+    depth,
+  });
 
   if (node.children) {
     node.children.forEach((child) => {
-      preorderTraversal(child, depth + 1, result);
+      preorderTraversal(
+        child,
+        `${prevfilename}/${node.name}`,
+        depth + 1,
+        result,
+      );
     });
   }
 
@@ -27,8 +38,16 @@ function preorderTraversal(
 
 function MainScreen() {
   // console.log(files);
-  const preOrderedFiles = preorderTraversal(files, -1).slice(1);
-  // console.log(preOrderedFiles);
+  const preOrderedFiles = preorderTraversal(files, '', -1).slice(1);
+  console.log(preOrderedFiles);
+  const [acceptedState, setAcceptedState] = React.useState(
+    preOrderedFiles.reduce(
+      (acc, file) => ({ ...acc, [file.fullfilename]: false }),
+      {},
+    ),
+  );
+  console.log(acceptedState);
+
   // Add the className 'dark' to main div to enable dark mode
   return (
     <div className="flex h-screen w-full">
@@ -67,9 +86,12 @@ function MainScreen() {
         <div className="flex-1 overflow-auto p-4 space-y-2">
           {preOrderedFiles.map((file) => (
             <FileLine
-              key={file.name}
-              filename={file.name}
+              key={file.fullfilename}
+              filename={file.filename}
               indentation={file.depth}
+              fullfilename={file.fullfilename}
+              acceptedState={acceptedState}
+              setAcceptedState={setAcceptedState}
             />
           ))}
         </div>

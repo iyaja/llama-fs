@@ -8,6 +8,7 @@ colorama
 termcolor
 click
 asciitree
+fastapi
 # agentops
 # langchain
 # langchain_core

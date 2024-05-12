@@ -1,15 +1,24 @@
+import { Button } from '@nextui-org/button';
 import FileIcon from './Icons/FileIcon';
 import FolderIcon from './Icons/FolderIcon';
 import MusicIcon from './Icons/MusicIcon';
 import VideoIcon from './Icons/VideoIcon';
 import ImageIcon from './Icons/ImageIcon';
+import CheckIcon from './Icons/CheckIcon';
+import CrossIcon from './Icons/CrossIcon';
 
 function FileLine({
   filename,
   indentation,
+  fullfilename,
+  acceptedState,
+  setAcceptedState,
 }: {
   readonly filename: string;
   readonly indentation: number;
+  readonly fullfilename: string;
+  readonly acceptedState: any;
+  readonly setAcceptedState: any;
 }) {
   let iconComponent;
   if (!filename.includes('.')) {
@@ -43,14 +52,50 @@ function FileLine({
   // weird paddingleft is a hack as pl is not working always
   return (
     <div
-      className="bg-white dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow"
-      style={{ paddingLeft: `${indentation * 20}px` }}
+      className={`${acceptedState[fullfilename] ? 'bg-green-500' : 'bg-white'} dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow`}
+      style={{
+        paddingLeft: `${indentation * 20}px`,
+      }}
     >
       <div className="p-4 flex items-center gap-4">
         {iconComponent}
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
           {filename}
         </span>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setAcceptedState((prevState: any) => {
+                const newState = { ...prevState };
+                Object.keys(newState).forEach((key) => {
+                  if (key.startsWith(fullfilename)) {
+                    newState[key] = true;
+                  }
+                });
+                return newState;
+              });
+            }}
+          >
+            <CheckIcon className="h-5 w-5 text-green-500" />
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setAcceptedState((prevState: any) => {
+                const newState = { ...prevState };
+                Object.keys(newState).forEach((key) => {
+                  if (key.startsWith(fullfilename)) {
+                    newState[key] = false;
+                  }
+                });
+                return newState;
+              });
+            }}
+          >
+            <CrossIcon className="h-5 w-5 text-red-500" />
+          </Button>
+        </div>
       </div>
     </div>
   );
