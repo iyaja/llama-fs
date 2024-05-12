@@ -117,7 +117,7 @@ Include the above items in your response exactly as is, along all other proposed
             {"content": WATCH_PROMPT, "role": "system"},
             {"content": json.dumps(fs_events), "role": "user"},
         ],
-        model="llama3-8b-8192",
+        model="llama3-70b-8192",
         response_format={"type": "json_object"},
         temperature=0,
     )

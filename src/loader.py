@@ -53,9 +53,9 @@ def load_documents(path: str):
             # ".py",
             ".txt",
             # ".md",
-            # ".png",
-            # ".jpg",
-            # ".jpeg",
+            ".png",
+            ".jpg",
+            ".jpeg",
             # ".ts",
         ],
     )
@@ -107,7 +107,7 @@ Write your response a JSON object with the following schema:
                     {"role": "system", "content": PROMPT},
                     {"role": "user", "content": json.dumps(doc)},
                 ],
-                model="llama3-8b-8192",
+                model="llama3-70b-8192",
                 response_format={"type": "json_object"},
                 temperature=0,
             )
@@ -255,7 +255,7 @@ Write your response a JSON object with the following schema:
             {"role": "system", "content": PROMPT},
             {"role": "user", "content": json.dumps(doc)},
         ],
-        model="llama3-8b-8192",
+        model="llama3-70b-8192",
         response_format={"type": "json_object"},
         temperature=0,
     )
