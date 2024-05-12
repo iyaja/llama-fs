@@ -6,6 +6,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 import time
+import shutil  # Add this import at the beginning of your file
+
 
 import colorama
 import ollama
@@ -30,12 +32,12 @@ os.environ["GROQ_API_KEY"] = "gsk_6QB3rILYqSoaHWd59BoQWGdyb3FYFb4qOc3QiNwm67kGTc
 
 
 class Request(BaseModel):
-    path: str
+    path: Optional[str] = None
     instruction: Optional[str] = None
     incognito: Optional[bool] = False
 
 
-class CommitRequest(Request):
+class CommitRequest(BaseModel):
     base_path: str
     src_path: str  # Relative to base_path
     dst_path: str  # Relative to base_path
@@ -123,17 +125,35 @@ async def watch(request: Request):
 
 @app.post("/commit")
 async def commit(request: CommitRequest):
-    if not os.path.exists(os.path.join(request.base_path, request.src_path)):
+    print('*'*80)
+    print(request)
+    print(request.base_path)
+    print(request.src_path)
+    print(request.dst_path)
+    print('*'*80)
+
+    src = os.path.join(request.base_path, request.src_path)
+    dst = os.path.join(request.base_path, request.dst_path)
+
+    if not os.path.exists(src):
         raise HTTPException(
             status_code=400, detail="Source path does not exist in filesystem"
         )
 
-    if not os.path.exists(os.path.join(request.base_path, request.dst_path)):
-        os.makedirs(os.path.join(request.base_path, request.dst_path))
+    # Ensure the destination directory exists
+    dst_directory = os.path.dirname(dst)
+    os.makedirs(dst_directory, exist_ok=True)
 
-    os.rename(
-        os.path.join(request.base_path, request.src_path),
-        os.path.join(request.base_path, request.dst_path),
-    )
+    try:
+        # If src is a file and dst is a directory, move the file into dst with the original filename.
+        if os.path.isfile(src) and os.path.isdir(dst):
+            shutil.move(src, os.path.join(dst, os.path.basename(src)))
+        else:
+            shutil.move(src, dst)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while moving the resource: {e}"
+        )
 
-    return
+    return {"message": "Commit successful"}
