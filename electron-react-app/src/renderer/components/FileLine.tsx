@@ -52,10 +52,10 @@ function FileLine({
   // weird paddingleft is a hack as pl is not working always
   return (
     <div
-      className={`bg-${
-        acceptedState[fullfilename] ? 'green' : 'white'
-      } dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow`}
-      style={{ paddingLeft: `${indentation * 20}px` }}
+      className={`${acceptedState[fullfilename] ? 'bg-green-500' : 'bg-white'} dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow`}
+      style={{
+        paddingLeft: `${indentation * 20}px`,
+      }}
     >
       <div className="p-4 flex items-center gap-4">
         {iconComponent}
@@ -66,9 +66,14 @@ function FileLine({
           <Button
             variant="ghost"
             onClick={() => {
-              setAcceptedState({
-                ...acceptedState,
-                [fullfilename]: true,
+              setAcceptedState((prevState: any) => {
+                const newState = { ...prevState };
+                Object.keys(newState).forEach((key) => {
+                  if (key.startsWith(fullfilename)) {
+                    newState[key] = true;
+                  }
+                });
+                return newState;
               });
             }}
           >
@@ -77,9 +82,14 @@ function FileLine({
           <Button
             variant="ghost"
             onClick={() => {
-              setAcceptedState({
-                ...acceptedState,
-                [fullfilename]: false,
+              setAcceptedState((prevState: any) => {
+                const newState = { ...prevState };
+                Object.keys(newState).forEach((key) => {
+                  if (key.startsWith(fullfilename)) {
+                    newState[key] = false;
+                  }
+                });
+                return newState;
               });
             }}
           >
