@@ -37,16 +37,16 @@ def main(src_path, dst_path, auto_yes=False):
         print("-" * 80 + "\n")  # Print a separator line with spacing for readability
 
     # Create File Tree
-    PROMPT = """
+    FILE_PROMPT = """
 You will be provided with list of files and a summary of their contents. Read them carefully, then propose a directory structure that optimally organizes the files using known conventions and best practices.
-
+Use descriptive folder names. Rename files concisely as necessary to reflect the contents and summary of the file
 
 Your response must be a JSON object with the following schema:
 ```json
     {
       "files": [
         {
-          "filename": "name of the file",
+          "filename": "proposed name of the file",
           "path": "path under proposed directory structure"
         }
       ]
@@ -57,7 +57,7 @@ Your response must be a JSON object with the following schema:
     client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
     chat_completion = client.chat.completions.create(
         messages=[
-            {"role": "system", "content": PROMPT},
+            {"role": "system", "content": FILE_PROMPT},
             {"role": "user", "content": json.dumps(summaries)},
         ],
         model="llama3-8b-8192",
