@@ -42,15 +42,47 @@ function preorderTraversal(
   return result;
 }
 
+function buildTree(paths) {
+  const root = { name: 'root', children: [] };
+
+  paths.forEach(({ dst_path }) => {
+    const parts = dst_path.split('/');
+    let currentLevel = root.children;
+
+    parts.forEach((part, index) => {
+      let existingPath = currentLevel.find(p => p.name === part);
+
+      if (!existingPath) {
+        if (index === parts.length - 1) {
+          // It's a file
+          existingPath = { name: part };
+        } else {
+          // It's a directory
+          existingPath = { name: part, children: [] };
+        }
+        currentLevel.push(existingPath);
+      }
+
+      if (existingPath.children) {
+        currentLevel = existingPath.children;
+      }
+    });
+  });
+
+  return root;
+}
+
 function MainScreen() {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [filePath, setFilePath] = useState('');
 
   // Function to handle file selection
   const handleFileSelect = (fileData: any) => {
     setSelectedFile(fileData);
   };
 
-  const preOrderedFiles = preorderTraversal(files, '', -1).slice(1);
+  const [preOrderedFiles, setPreOrderedFiles] = useState([]);
+  // const preOrderedFiles = preorderTraversal(files, '', -1).slice(1);
   const [acceptedState, setAcceptedState] = React.useState(
     preOrderedFiles.reduce(
       (acc, file) => ({ ...acc, [file.fullfilename]: false }),
@@ -59,10 +91,24 @@ function MainScreen() {
   );
 
   const handleBatch = async () => {
-    const response = await fetch('http://example.com/files');
+    const response = await fetch('http://localhost:8000/batch', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ path: filePath }),
+    });
     const data = await response.json();
-    console.log(data);
-    // setFilesReturned(data);
+    const treeData = buildTree(data);
+    const preOrderedTreeData = preorderTraversal(treeData, '', -1).slice(1);
+    console.log(treeData);
+    setPreOrderedFiles(preOrderedTreeData);
+    setAcceptedState(
+      preOrderedTreeData.reduce(
+        (acc, file) => ({ ...acc, [file.fullfilename]: false }),
+        {},
+      ),
+    );
   };
 
   // Add the className 'dark' to main div to enable dark mode
@@ -84,6 +130,7 @@ function MainScreen() {
               className="flex-1 rounded-lg"
               placeholder="Enter file path"
               type="text"
+              onChange={(e) => setFilePath(e.target.value)}
             />
           </div>
           <div className="flex-1" />

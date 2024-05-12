@@ -14,6 +14,7 @@ from asciitree import LeftAligned
 from asciitree.drawing import BOX_LIGHT, BoxStyle
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
 from llama_index.core import SimpleDirectoryReader
 from pydantic import BaseModel
@@ -42,6 +43,18 @@ class CommitRequest(Request):
 
 app = FastAPI()
 
+origins = [
+    "*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Or restrict to ['POST', 'GET', etc.]
+    allow_headers=["*"],
+)
+
 
 @app.get("/")
 async def root():
@@ -53,7 +66,8 @@ async def batch(request: Request):
 
     path = request.path
     if not os.path.exists(path):
-        raise HTTPException(status_code=400, detail="Path does not exist in filesystem")
+        raise HTTPException(
+            status_code=400, detail="Path does not exist in filesystem")
 
     summaries = await get_dir_summaries(path)
     # Get file tree
@@ -84,7 +98,8 @@ async def batch(request: Request):
 async def watch(request: Request):
     path = request.path
     if not os.path.exists(path):
-        raise HTTPException(status_code=400, detail="Path does not exist in filesystem")
+        raise HTTPException(
+            status_code=400, detail="Path does not exist in filesystem")
 
     response_queue = queue.Queue()
 

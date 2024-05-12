@@ -10,7 +10,7 @@ click
 asciitree
 fastapi
 weave
-# agentops
-# langchain
-# langchain_core
+agentops
+langchain
+langchain_core
 watchdog
