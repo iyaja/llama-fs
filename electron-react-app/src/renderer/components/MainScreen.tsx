@@ -1,5 +1,6 @@
 import { Button } from '@nextui-org/button';
 import React from 'react';
+import { useState } from 'react';
 import FileIcon from './Icons/FileIcon';
 import FolderIcon from './Icons/FolderIcon';
 import LayoutGridIcon from './Icons/LayoutGridIcon';
@@ -9,6 +10,7 @@ import UploadIcon from './Icons/UploadIcon';
 import ListOrderedIcon from './Icons/ListOrderedIcon';
 import files from '../files.json';
 import FileLine from './FileLine';
+import FileDetails from './FileDetails';
 
 function preorderTraversal(
   node: { name: string; children?: any[] },
@@ -37,7 +39,13 @@ function preorderTraversal(
 }
 
 function MainScreen() {
-  // console.log(files);
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  // Function to handle file selection
+  const handleFileSelect = (fileData: any) => {
+    setSelectedFile(fileData);
+  };
+
   const preOrderedFiles = preorderTraversal(files, '', -1).slice(1);
   console.log(preOrderedFiles);
   const [acceptedState, setAcceptedState] = React.useState(
@@ -83,17 +91,26 @@ function MainScreen() {
             </Button>
           </div>
         </div>
-        <div className="flex-1 overflow-auto p-4 space-y-2">
-          {preOrderedFiles.map((file) => (
-            <FileLine
-              key={file.fullfilename}
-              filename={file.filename}
-              indentation={file.depth}
-              fullfilename={file.fullfilename}
-              acceptedState={acceptedState}
-              setAcceptedState={setAcceptedState}
-            />
-          ))}
+        <div className="flex-1 flex">
+          <div className="w-1/2 overflow-auto p-4 space-y-2 border-r border-gray-200 dark:border-gray-700" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
+            {preOrderedFiles.map((file) => (
+              <div onClick={() => handleFileSelect(file)} >
+                <FileLine
+                  key={file.fullfilename}
+                  filename={file.filename}
+                  indentation={file.depth}
+                  fullfilename={file.fullfilename}
+                  acceptedState={acceptedState}
+                  setAcceptedState={setAcceptedState}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="w-1/2 overflow-auto p-4">
+            <FileDetails fileData={selectedFile} />
+            {/* Container for explaining the data in the file line that's selected */}
+            {/* This container will be populated with content dynamically based on the selected FileLine */}
+          </div>
         </div>
       </div>
     </div>
