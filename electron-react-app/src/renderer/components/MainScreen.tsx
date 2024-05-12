@@ -50,12 +50,12 @@ function buildTree(paths) {
     let currentLevel = root.children;
 
     parts.forEach((part, index) => {
-      let existingPath = currentLevel.find(p => p.name === part);
+      let existingPath = currentLevel.find((p) => p.name === part);
 
       if (!existingPath) {
         if (index === parts.length - 1) {
           // It's a file, include the summary
-          existingPath = { name: part, summary: summary };
+          existingPath = { name: part, summary };
         } else {
           // It's a directory
           existingPath = { name: part, children: [] };
@@ -82,6 +82,7 @@ function MainScreen() {
     setSelectedFile(fileData);
   };
 
+  const [newOldMap, setNewOldMap] = useState([]);
   const [preOrderedFiles, setPreOrderedFiles] = useState([]);
   // const preOrderedFiles = preorderTraversal(files, '', -1).slice(1);
   const [acceptedState, setAcceptedState] = React.useState([]);
@@ -94,12 +95,13 @@ function MainScreen() {
       },
       body: JSON.stringify({
         // path: filePath
-        path: '/Users/reibs/Projects/llama-fs/sample_data'
+        path: '/Users/reibs/Projects/llama-fs/sample_data',
       }),
     });
     const data = await response.json();
-    console.log('DATA!!')
-    console.log(data)
+    setNewOldMap(data);
+    // console.log('DATA!!');
+    // console.log(data);
     const treeData = buildTree(data);
     const preOrderedTreeData = preorderTraversal(treeData, '', -1).slice(1);
     setPreOrderedFiles(preOrderedTreeData);
@@ -110,7 +112,33 @@ function MainScreen() {
       ),
     );
   };
-  console.log(watchMode)
+  const handleConfirmSelectedChanges = async () => {
+    const returnedObj = [];
+    preOrderedFiles.forEach((file) => {
+      const isAccepted = acceptedState[file.fullfilename];
+      if (isAccepted) {
+        const noRootFileName = file.fullfilename.replace('/root/', '');
+        if (newOldMap.some((change) => change.dst_path === noRootFileName)) {
+          const acceptedChangeMap = newOldMap.find(
+            (change) => change.dst_path === noRootFileName,
+          );
+          returnedObj.push(acceptedChangeMap);
+        }
+      }
+    });
+
+    // commit endpoint only supports 1 change at a time
+    returnedObj.forEach(async (change) => {
+      const response = await fetch('http://localhost:8000/commit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(change),
+      });
+      console.log(response);
+    });
+  };
 
   // Add the className 'dark' to main div to enable dark mode
   return (
@@ -139,7 +167,7 @@ function MainScreen() {
             <Button variant="ghost" onClick={() => handleBatch()}>
               <WandIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             </Button>
-            <div onClick={() => setWatchMode(!!!watchMode)}>
+            <div onClick={() => setWatchMode(!watchMode)}>
               <TelescopeButton isLoading={watchMode} />
             </div>
           </div>
@@ -169,10 +197,13 @@ function MainScreen() {
           </div>
         </div>
       </div>
-      <div className="flex-1">
-        <button className="bg-gray-400 text-white w-full rounded p-4">
-          Accept
-        </button>
+      <div className="fixed inset-x-0 bottom-2 flex justify-center">
+        <Button
+          className="bg-green-300 text-gray-700 rounded p-3"
+          onClick={() => handleConfirmSelectedChanges()}
+        >
+          Confirm selected changes
+        </Button>
       </div>
     </div>
   );
