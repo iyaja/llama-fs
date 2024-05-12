@@ -47,13 +47,20 @@ Before installing, ensure you have the following requirements:
 ### Installing
 
 To install the project, follow these steps:
-Clone the repository:
+1. Clone the repository:
    ```bash
    git clone https://github.com/iyaja/llama-fs.git
    ```
 
-Navigate to the project directory:
+2. Navigate to the project directory:
     ```bash
     cd llama-fs
     ```
+
+3. Install requirements
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Usage
 
