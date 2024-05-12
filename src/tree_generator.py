@@ -5,7 +5,8 @@ import os
 
 FILE_PROMPT = """
 You will be provided with list of files and a summary of their contents. Read them carefully, then propose a directory structure that optimally organizes the files using known conventions and best practices.
-Use descriptive folder names. Rename files concisely as necessary to reflect the contents and summary of the file
+Use descriptive folder names. As part of the folder structured rename files concisely for any names that don't reflect the content of the files.
+The purpose of the names is to allow a user to quickly understand the content of the file.
 
 Your response must be a JSON object with the following schema:
 ```json
@@ -13,7 +14,7 @@ Your response must be a JSON object with the following schema:
     "files": [
         {
             "src_path": "original file path",
-            "dst_path": "new file path under proposed directory structure with updated file name"
+            "dst_path": "new file path under proposed directory structure with proposed file name"
         }
     ]
 }
