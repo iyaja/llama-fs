@@ -6,6 +6,9 @@ import ollama
 from groq import Groq
 import weave
 import agentops
+from llama_index.core import SimpleDirectoryReader
+from llama_index.core import Document
+from llama_index.core.node_parser import TokenTextSplitter
 
 
 # @weave.op()
@@ -36,9 +39,15 @@ def get_doc_summaries(path: str):
 # @weave.op()
 # @agentops.record_function("load")
 def load_documents(path: str):
-    # reader = SimpleDirectoryReader(input_dir=path, recursive=True)
-    reader = SimpleDirectoryReader(input_dir=path)
-    documents = reader.load_data()
+    reader = SimpleDirectoryReader(input_dir=path, recursive=True)
+    splitter = TokenTextSplitter(chunk_size=6144)
+    documents = []
+    for docs in reader.iter_data():
+        # By default, llama index split files into multiple "documents"
+        if len(docs) > 1:
+            # So we first join all the document contexts, then truncate by token count
+            text = splitter.split_text("\n".join([d.text for d in docs]))[0]
+            documents.append(Document(text=text, metadata=docs[0].metadata))
     doc_dicts = [{"content": d.text, **d.metadata} for d in documents]
     return doc_dicts
 
