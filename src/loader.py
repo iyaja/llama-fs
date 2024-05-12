@@ -60,7 +60,9 @@ def query_summaries(doc_dicts):
     )
 
     summaries = []
+    print("Summarizing documents ...")
     for doc in doc_dicts:
+        print("Processing {}".format(doc["file_path"]))
         PROMPT = f"""
 The following contains file contents, along with their metadata. For a file, provide a summary of the contents.
 The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary.
