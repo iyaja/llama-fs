@@ -1,0 +1,13 @@
+@keyframes progress {
+    from {
+      stroke-dasharray: 0 80;
+    }
+    to {
+      stroke-dasharray: 80 80;
+    }
+  }
+
+  .progress {
+    animation: progress 1s linear infinite;
+    /* animation-direction: alternate; */
+  }
