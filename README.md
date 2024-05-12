@@ -50,8 +50,10 @@ To install the project, follow these steps:
 Clone the repository:
    ```bash
    git clone https://github.com/iyaja/llama-fs.git
+   ```
 
 Navigate to the project directory:
     ```bash
     cd llama-fs
+    ```
 
