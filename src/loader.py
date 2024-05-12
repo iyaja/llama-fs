@@ -9,6 +9,7 @@ import ollama
 import weave
 from groq import AsyncGroq, Groq
 from llama_index.core import Document, SimpleDirectoryReader
+from llama_index.core.schema import ImageDocument
 from llama_index.core.node_parser import TokenTextSplitter
 from termcolor import colored
 
@@ -19,7 +20,7 @@ async def get_doc_summaries(path: str):
     doc_dicts = load_documents(path)
     # metadata = process_metadata(doc_dicts)
 
-    summaries = await query_summaries(doc_dicts)
+    summaries = await get_summaries(doc_dicts)
 
     # Convert path to relative path
     for summary in summaries:
@@ -46,7 +47,15 @@ def load_documents(path: str):
     reader = SimpleDirectoryReader(
         input_dir=path,
         recursive=True,
-        required_exts=[".pdf", ".docx", ".py", ".txt", ".md", ".png", ".ts",],
+        required_exts=[
+            # ".pdf",
+            # ".docx",
+            # ".py",
+            # ".txt",
+            # ".md",
+            ".png",
+            # ".ts",
+        ],
     )
     splitter = TokenTextSplitter(chunk_size=6144)
     documents = []
@@ -58,8 +67,7 @@ def load_documents(path: str):
             documents.append(Document(text=text, metadata=docs[0].metadata))
         else:
             documents.append(docs[0])
-    doc_dicts = [{"content": d.text, **d.metadata} for d in documents]
-    return doc_dicts
+    return documents
 
 
 # @weave.op()
@@ -74,7 +82,7 @@ def process_metadata(doc_dicts):
     return metadata_list
 
 
-async def query_summary(doc, client):
+async def summarize_document(doc, client):
     PROMPT = """
 You will be provided with the contents of a file along with its metadata. Provide a summary of the contents. The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary. Make the summary as specific to the file as possible.
 
@@ -119,11 +127,64 @@ Write your response a JSON object with the following schema:
     return summary
 
 
-async def query_summaries(doc_dicts):
+async def summarize_image_document(doc: ImageDocument, client):
+    PROMPT = """
+You will be provided with an image along with its metadata. Provide a summary of the image contents. The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary. Make the summary as specific to the file as possible.
+
+Write your response a JSON object with the following schema:
+
+```json
+{
+    "file_path": "path to the file including name",
+    "summary": "summary of the content"
+}
+```
+""".strip()
+
+    client = ollama.AsyncClient()
+    print("Running image summarization")
+    chat_completion = await client.chat(
+        messages=[
+            # {"role": "system", "content": "Respond with one short sentence."},
+            {
+                "role": "user",
+                "content": "Summarize the contents of this image.",
+                "images": [doc.image_path],
+            },
+        ],
+        model="moondream",
+        # format="json",
+        # stream=True,
+        options={"num_predict": 128},
+    )
+
+    summary = {
+        "file_path": doc.image_path,
+        "summary": chat_completion["message"]["content"],
+    }
+
+    print(colored(summary["file_path"], "green"))  # Print the filename in green
+    print(summary["summary"])  # Print the summary of the contents
+    print("-" * 80 + "\n")  # Print a separator line with spacing for readability
+    return summary
+
+
+async def dispatch_summarize_document(doc, client):
+    if isinstance(doc, ImageDocument):
+        return await summarize_image_document(doc, client)
+    elif isinstance(doc, Document):
+        return await summarize_document(doc.metadata, client)
+    else:
+        raise ValueError("Document type not supported")
+
+
+async def get_summaries(documents):
     client = AsyncGroq(
         api_key=os.environ.get("GROQ_API_KEY"),
     )
-    summaries = await asyncio.gather(*[query_summary(doc, client) for doc in doc_dicts])
+    summaries = await asyncio.gather(
+        *[dispatch_summarize_document(doc, client) for doc in documents]
+    )
     return summaries
 
 
