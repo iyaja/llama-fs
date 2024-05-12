@@ -43,13 +43,7 @@ async def batch(request: Request):
     if not os.path.exists(path):
         raise HTTPException(status_code=400, detail="Path does not exist in filesystem")
 
-    summaries = get_doc_summaries(path)
-
-    for summary in summaries:
-        print(colored(summary["file_name"], "green"))  # Print the filename in green
-        print(summary["summary"])  # Print the summary of the contents
-        print("-" * 80 + "\n")  # Print a separator line with spacing for readability
-
+    summaries = await get_doc_summaries(path)
     # Get file tree
     files = create_file_tree(summaries)
 
@@ -68,7 +62,7 @@ async def batch(request: Request):
 
     # Prepend base path to dst_path
     for file in files:
-        file["dst_path"] = os.path.join(path, file["dst_path"])
-        file['summary'] = summaries[files.index(file)]['summary']
+        # file["dst_path"] = os.path.join(path, file["dst_path"])
+        file["summary"] = summaries[files.index(file)]["summary"]
 
     return files

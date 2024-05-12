@@ -43,7 +43,11 @@ async def get_doc_summaries(path: str):
 # @weave.op()
 # @agentops.record_function("load")
 def load_documents(path: str):
-    reader = SimpleDirectoryReader(input_dir=path, recursive=True)
+    reader = SimpleDirectoryReader(
+        input_dir=path,
+        recursive=True,
+        required_exts=[".pdf", ".docx", ".py", ".txt", ".md", ".png", ".ts",],
+    )
     splitter = TokenTextSplitter(chunk_size=6144)
     documents = []
     for docs in reader.iter_data():
@@ -104,9 +108,13 @@ Write your response a JSON object with the following schema:
 
     summary = json.loads(chat_completion.choices[0].message.content)
 
-    print(colored(summary["file_path"], "green"))  # Print the filename in green
-    print(summary["summary"])  # Print the summary of the contents
-    print("-" * 80 + "\n")  # Print a separator line with spacing for readability
+    try:
+        print(colored(summary["file_path"], "green"))  # Print the filename in green
+        print(summary["summary"])  # Print the summary of the contents
+        print("-" * 80 + "\n")  # Print a separator line with spacing for readability
+    except KeyError as e:
+        print(e)
+        print(summary)
 
     return summary
 
@@ -116,7 +124,6 @@ async def query_summaries(doc_dicts):
         api_key=os.environ.get("GROQ_API_KEY"),
     )
     summaries = await asyncio.gather(*[query_summary(doc, client) for doc in doc_dicts])
-
     return summaries
 
 
