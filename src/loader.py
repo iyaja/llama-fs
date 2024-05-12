@@ -69,7 +69,7 @@ Your response must be a JSON object with the following schema:
     ]
 }
 ```
-    """.strip()
+""".strip()
 
     chat_completion = client.chat.completions.create(
         messages=[
