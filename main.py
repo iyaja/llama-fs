@@ -10,14 +10,9 @@ from asciitree import LeftAligned
 from asciitree.drawing import BoxStyle, BOX_LIGHT
 from src.loader import get_doc_summaries
 
-# import agentops
-# import litellm
-
 import click
 
 colorama.init()  # Initializes colorama to make it work on Windows as well
-
-# agentops.init(api_key="483ce794-f363-4983-8c66-3f669e12884b")
 
 
 @click.command()
@@ -39,7 +34,8 @@ def main(src_path, dst_path, auto_yes=False):
     # Create File Tree
     FILE_PROMPT = """
 You will be provided with list of files and a summary of their contents. Read them carefully, then propose a directory structure that optimally organizes the files using known conventions and best practices.
-Use descriptive folder names. Rename files concisely as necessary to reflect the contents and summary of the file
+
+Use descriptive folder names. Rename poorly-named files with concise new names to reflect the contents of file.
 
 Your response must be a JSON object with the following schema:
 ```json
@@ -47,7 +43,7 @@ Your response must be a JSON object with the following schema:
       "files": [
         {
           "filename": "proposed name of the file",
-          "path": "path under proposed directory structure"
+          "path": "path under proposed directory structure, including the updated filename"
         }
       ]
     }
@@ -78,13 +74,8 @@ Your response must be a JSON object with the following schema:
         for part in parts:
             current = current.setdefault(part, {})
 
-    # for file in file_tree:
-    #     parts = pathlib.Path(file["path"]).parts
-    #     current = tree
-    #     for part in parts:
-    #         current = current.setdefault(part, {})
+    tree = {BASE_DIR: tree}
 
-    print(tree)
     tr = LeftAligned(draw=BoxStyle(gfx=BOX_LIGHT, horiz_len=1))
     click.echo(tr(tree))
 
