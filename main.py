@@ -12,6 +12,7 @@ from asciitree import LeftAligned
 from asciitree.drawing import BoxStyle, BOX_LIGHT
 from src.loader import get_doc_summaries
 from src.tree_generator import create_file_tree
+import asyncio
 
 import click
 
@@ -19,15 +20,15 @@ colorama.init()  # Initializes colorama to make it work on Windows as well
 
 
 @click.command()
-@click.argument("path", type=click.Path(exists=True))
+@click.argument("src_path", type=click.Path(exists=True))
 @click.argument("dst_path", type=click.Path())
 @click.option("--auto-yes", is_flag=True, help="Automatically say yes to all prompts")
-def main(path, dst_path, auto_yes=False):
+def main(src_path, dst_path, auto_yes=False):
     os.environ["GROQ_API_KEY"] = (
         "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"
     )
 
-    summaries = get_doc_summaries(path)
+    summaries = asyncio.run(get_doc_summaries(src_path))
 
     # Get file tree
     files = create_file_tree(summaries)
@@ -43,15 +44,15 @@ def main(path, dst_path, auto_yes=False):
         for part in parts:
             current = current.setdefault(part, {})
 
-    tree = {path: tree}
+    tree = {dst_path: tree}
 
     tr = LeftAligned(draw=BoxStyle(gfx=BOX_LIGHT, horiz_len=1))
     print(tr(tree))
 
     # Prepend base path to dst_path
     for file in files:
-        file["dst_path"] = os.path.join(path, file["dst_path"])
-        file['summary'] = summaries[files.index(file)]['summary']
+        file["dst_path"] = os.path.join(src_path, file["dst_path"])
+        file["summary"] = summaries[files.index(file)]["summary"]
 
     if not auto_yes and not click.confirm(
         "Proceed with directory structure?", default=True

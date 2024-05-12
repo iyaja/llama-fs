@@ -1,27 +1,31 @@
+import asyncio
 import json
 import os
 from collections import defaultdict
-from llama_index.core import SimpleDirectoryReader
-import ollama
-from groq import Groq
-import weave
+
 import agentops
-from llama_index.core import SimpleDirectoryReader
-from llama_index.core import Document
+import colorama
+import ollama
+import weave
+from groq import AsyncGroq, Groq
+from llama_index.core import Document, SimpleDirectoryReader
 from llama_index.core.node_parser import TokenTextSplitter
+from termcolor import colored
 
 
 # @weave.op()
 # @agentops.record_function("summarize")
-def get_doc_summaries(path: str):
+async def get_doc_summaries(path: str):
     doc_dicts = load_documents(path)
-    metadata = process_metadata(doc_dicts)
+    # metadata = process_metadata(doc_dicts)
 
-    summaries = query_summaries(doc_dicts)
+    summaries = await query_summaries(doc_dicts)
 
-    file_summaries = merge_summary_documents(summaries, metadata)
+    # Convert path to relative path
+    for summary in summaries:
+        summary["file_path"] = os.path.relpath(summary["file_path"], path)
 
-    return file_summaries
+    return summaries
 
     # [
     #     {
@@ -66,21 +70,11 @@ def process_metadata(doc_dicts):
     return metadata_list
 
 
-# @weave.op()
-# @agentops.record_function("query")
-def query_summaries(doc_dicts):
-    client = Groq(
-        api_key=os.environ.get("GROQ_API_KEY"),
-    )
-
-    summaries = []
-    print("Summarizing documents ...")
-    for doc in doc_dicts:
-        print("Processing {}".format(doc["file_path"]))
-        PROMPT = """
+async def query_summary(doc, client):
+    PROMPT = """
 You will be provided with the contents of a file along with its metadata. Provide a summary of the contents. The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary. Make the summary as specific to the file as possible.
 
-Return a JSON list with the following schema:
+Write your response a JSON object with the following schema:
 
 ```json
 {
@@ -90,26 +84,38 @@ Return a JSON list with the following schema:
 ```
 """.strip()
 
-        max_retries = 5
-        attempt = 0
-        while attempt < max_retries:
-            try:
-                chat_completion = client.chat.completions.create(
-                    messages=[
-                        {"role": "system", "content": PROMPT},
-                        {"role": "user", "content": json.dumps(doc)},
-                    ],
-                    model="llama3-8b-8192",
-                    response_format={"type": "json_object"},
-                    temperature=0,
-                )
-                break
-            except Exception as e:
-                print("Error status {}".format(e.status_code))
-                attempt += 1
+    max_retries = 5
+    attempt = 0
+    while attempt < max_retries:
+        try:
+            chat_completion = await client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": PROMPT},
+                    {"role": "user", "content": json.dumps(doc)},
+                ],
+                model="llama3-8b-8192",
+                response_format={"type": "json_object"},
+                temperature=0,
+            )
+            break
+        except Exception as e:
+            print("Error status {}".format(e.status_code))
+            attempt += 1
 
-        summary = json.loads(chat_completion.choices[0].message.content)
-        summaries.append(summary)
+    summary = json.loads(chat_completion.choices[0].message.content)
+
+    print(colored(summary["file_path"], "green"))  # Print the filename in green
+    print(summary["summary"])  # Print the summary of the contents
+    print("-" * 80 + "\n")  # Print a separator line with spacing for readability
+
+    return summary
+
+
+async def query_summaries(doc_dicts):
+    client = AsyncGroq(
+        api_key=os.environ.get("GROQ_API_KEY"),
+    )
+    summaries = await asyncio.gather(*[query_summary(doc, client) for doc in doc_dicts])
 
     return summaries
 
