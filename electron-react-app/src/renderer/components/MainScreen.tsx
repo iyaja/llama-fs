@@ -51,14 +51,19 @@ function MainScreen() {
   };
 
   const preOrderedFiles = preorderTraversal(files, '', -1).slice(1);
-  // console.log(preOrderedFiles);
   const [acceptedState, setAcceptedState] = React.useState(
     preOrderedFiles.reduce(
       (acc, file) => ({ ...acc, [file.fullfilename]: false }),
       {},
     ),
   );
-  // console.log(acceptedState);
+
+  const handleBatch = async () => {
+    const response = await fetch('http://example.com/files');
+    const data = await response.json();
+    console.log(data);
+    // setFilesReturned(data);
+  };
 
   // Add the className 'dark' to main div to enable dark mode
   return (
@@ -74,33 +79,16 @@ function MainScreen() {
       </div>
       <div className="flex-1 flex flex-col">
         <div className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4">
-          {/* <div className="flex items-center gap-2">
-            <Button variant="ghost">
-              <LayoutGridIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-            </Button>
-            <Button variant="ghost">
-              <ListIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-            </Button>
-          </div> */}
           <div className="flex items-center gap-2">
             <Input
               className="flex-1 rounded-lg"
               placeholder="Enter file path"
               type="text"
             />
-            <Button
-              className="bg-gray-800 dark:bg-gray-900 rounded-md"
-              variant="ghost"
-            >
-              <EnterIcon
-                className="h-5 w-5 text-gray-50 dark:text-gray-50 p-1"
-                style={{ margin: '2px' }}
-              />
-            </Button>
           </div>
           <div className="flex-1" />
           <div className="flex items-center gap-4">
-            <Button variant="ghost">
+            <Button variant="ghost" onClick={() => handleBatch()}>
               <WandIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             </Button>
             <TelescopeButton isLoading />
