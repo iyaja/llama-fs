@@ -48,6 +48,8 @@ def load_documents(path: str):
             # So we first join all the document contexts, then truncate by token count
             text = splitter.split_text("\n".join([d.text for d in docs]))[0]
             documents.append(Document(text=text, metadata=docs[0].metadata))
+        else:
+            documents.append(docs[0])
     doc_dicts = [{"content": d.text, **d.metadata} for d in documents]
     return doc_dicts
 
