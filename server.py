@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from termcolor import colored
 from watchdog.observers import Observer
 
-from src.loader import get_doc_summaries
+from src.loader import get_dir_summaries
 from src.tree_generator import create_file_tree
 from src.watch_utils import Handler
 from src.watch_utils import create_file_tree as create_watch_file_tree
@@ -32,6 +32,12 @@ class Request(BaseModel):
     path: str
     instruction: Optional[str] = None
     incognito: Optional[bool] = False
+
+
+class CommitRequest(Request):
+    base_path: str
+    src_path: str  # Relative to base_path
+    dst_path: str  # Relative to base_path
 
 
 app = FastAPI()
@@ -49,7 +55,7 @@ async def batch(request: Request):
     if not os.path.exists(path):
         raise HTTPException(status_code=400, detail="Path does not exist in filesystem")
 
-    summaries = await get_doc_summaries(path)
+    summaries = await get_dir_summaries(path)
     # Get file tree
     files = create_file_tree(summaries)
 
@@ -93,9 +99,26 @@ async def watch(request: Request):
     def stream():
         while True:
             response = response_queue.get()
-            print(response)
             yield json.dumps(response) + "\n"
             # yield json.dumps({"status": "watching"}) + "\n"
             # time.sleep(5)
 
     return StreamingResponse(stream())
+
+
+@app.post("/commit")
+async def commit(request: CommitRequest):
+    if not os.path.exists(os.path.join(request.base_path, request.src_path)):
+        raise HTTPException(
+            status_code=400, detail="Source path does not exist in filesystem"
+        )
+
+    if not os.path.exists(os.path.join(request.base_path, request.dst_path)):
+        os.makedirs(os.path.join(request.base_path, request.dst_path))
+
+    os.rename(
+        os.path.join(request.base_path, request.src_path),
+        os.path.join(request.base_path, request.dst_path),
+    )
+
+    return

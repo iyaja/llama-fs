@@ -10,7 +10,7 @@ from pathlib import Path
 from termcolor import colored
 from asciitree import LeftAligned
 from asciitree.drawing import BoxStyle, BOX_LIGHT
-from src.loader import get_doc_summaries
+from src.loader import get_dir_summaries
 from src.tree_generator import create_file_tree
 import asyncio
 
@@ -28,7 +28,7 @@ def main(src_path, dst_path, auto_yes=False):
         "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"
     )
 
-    summaries = asyncio.run(get_doc_summaries(src_path))
+    summaries = asyncio.run(get_dir_summaries(src_path))
 
     # Get file tree
     files = create_file_tree(summaries)
