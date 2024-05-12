@@ -82,7 +82,7 @@ function FileLine({
         </div>
       }
       <div
-        className={`${acceptedState[fullfilename] ? 'bg-green-500' : 'bg-white'} dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700 mx-2`}
+        className={`${acceptedState[fullfilename] ? 'bg-green-100' : 'bg-white'} dark:bg-gray-950 rounded-md shadow-sm hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700 mx-2`}
       >
         <div className="p-4 flex items-center gap-4">
           {iconComponent}
