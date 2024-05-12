@@ -69,5 +69,6 @@ async def batch(request: Request):
     # Prepend base path to dst_path
     for file in files:
         file["dst_path"] = os.path.join(path, file["dst_path"])
+        file['summary'] = summaries[files.index(file)]['summary']
 
     return files
