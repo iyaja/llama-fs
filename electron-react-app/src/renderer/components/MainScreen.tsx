@@ -80,7 +80,7 @@ function buildTree(paths) {
 function MainScreen() {
   const [watchMode, setWatchMode] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [filePath, setFilePath] = useState('');
+  const [filePath, setFilePath] = useState('/Users/reibs/Projects/llama-fs/sample_data');
   const [loading, setLoading] = useState(false);
 
   // Function to handle file selection
@@ -101,14 +101,12 @@ function MainScreen() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        // path: filePath
-        path: '/Users/reibs/Projects/llama-fs/sample_data',
+        path: filePath
+        // path: '/Users/reibs/Projects/llama-fs/sample_data',
       }),
     });
     const data = await response.json();
     setNewOldMap(data);
-    // console.log('DATA!!');
-    // console.log(data);
     const treeData = buildTree(data);
     const preOrderedTreeData = preorderTraversal(treeData, '', -1).slice(1);
     setPreOrderedFiles(preOrderedTreeData);
@@ -120,6 +118,21 @@ function MainScreen() {
     );
     setLoading(false);
   };
+  const handleWatch = async () => {
+    setLoading(true);
+    const response = await fetch('http://localhost:8000/batch', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        path: filePath
+        // path: '/Users/reibs/Projects/llama-fs/sample_data',
+      }),
+    });
+  };
+
+
   const handleConfirmSelectedChanges = async () => {
     const returnedObj = [];
     preOrderedFiles.forEach((file) => {
@@ -131,7 +144,7 @@ function MainScreen() {
             (change) => change.dst_path === noRootFileName,
           );
           returnedObj.push({
-            base_path: '/Users/reibs/Projects/llama-fs/sample_data',
+            base_path: filePath,
             src_path: acceptedChangeMap.src_path,
             dst_path: acceptedChangeMap.dst_path
           });
@@ -169,7 +182,17 @@ function MainScreen() {
             Llama-FS
           </span>
         </div>
-        <nav className="flex flex-col gap-2" />
+        <nav className="flex flex-col gap-2" >
+          <div className="bg-white p-2 rounded">
+            /Users/reibs/Projects/llama-fs/sample_data
+          </div>
+          <div className="bg-white p-2 rounded">
+            /Users/reibs/Downloads
+          </div>
+          <div className="bg-white p-2 rounded">
+            /Users/reibs/Projects/ollama
+          </div>
+        </nav>
       </div>
       <div className="flex-1 flex flex-col">
         <div className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center gap-4">
@@ -179,6 +202,7 @@ function MainScreen() {
               placeholder="Enter file path"
               type="text"
               onChange={(e) => setFilePath(e.target.value)}
+              defaultValue='/Users/reibs/Projects/llama-fs/sample_data'
             />
           </div>
           <div className="flex-1" />
@@ -199,8 +223,8 @@ function MainScreen() {
             {loading && (
               <div className="flex flex-col items-center">
                 <h2 className="text-lg font-semibold mb-2">Reading and classifying your files...</h2>
-                <div className="flex justify-center">
-                  <img src={ollamaWave} alt="Loading..." />
+                <div className="flex justify-center" style={{ width: '70%' }}>
+                  <img src={ollamaWave} alt="Loading..." style={{ width: '100%' }} />
                 </div>
               </div>
             )}
