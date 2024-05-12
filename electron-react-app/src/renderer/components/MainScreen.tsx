@@ -15,6 +15,7 @@ import WandIcon from './Icons/WandIcon';
 import TelescopeIcon from './Icons/TelescopeIcon';
 import TelescopeButton from './TelescopeButton';
 import EnterIcon from './Icons/EnterIcon';
+import ollamaWave from '../../../assets/ollama_wave.gif'
 
 
 function preorderTraversal(
@@ -80,6 +81,7 @@ function MainScreen() {
   const [watchMode, setWatchMode] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePath, setFilePath] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Function to handle file selection
   const handleFileSelect = (fileData: any) => {
@@ -92,6 +94,7 @@ function MainScreen() {
   const [acceptedState, setAcceptedState] = React.useState([]);
 
   const handleBatch = async () => {
+    setLoading(true);
     const response = await fetch('http://localhost:8000/batch', {
       method: 'POST',
       headers: {
@@ -115,6 +118,7 @@ function MainScreen() {
         {},
       ),
     );
+    setLoading(false);
   };
   const handleConfirmSelectedChanges = async () => {
     const returnedObj = [];
@@ -126,10 +130,16 @@ function MainScreen() {
           const acceptedChangeMap = newOldMap.find(
             (change) => change.dst_path === noRootFileName,
           );
-          returnedObj.push(acceptedChangeMap);
+          returnedObj.push({
+            base_path: '/Users/reibs/Projects/llama-fs/sample_data',
+            src_path: acceptedChangeMap.src_path,
+            dst_path: acceptedChangeMap.dst_path
+          });
         }
       }
     });
+
+    console.log(returnedObj)
 
     // commit endpoint only supports 1 change at a time
     returnedObj.forEach(async (change) => {
@@ -142,6 +152,11 @@ function MainScreen() {
       });
       console.log(response);
     });
+
+    // clean objects
+    setNewOldMap([]);
+    setPreOrderedFiles([]);
+    setAcceptedState([]);
   };
 
   // Add the className 'dark' to main div to enable dark mode
@@ -181,6 +196,14 @@ function MainScreen() {
             className="w-1/2 overflow-auto p-4 space-y-2 border-r border-gray-200 dark:border-gray-700"
             style={{ maxHeight: 'calc(100vh - 4rem)' }}
           >
+            {loading && (
+              <div className="flex flex-col items-center">
+                <h2 className="text-lg font-semibold mb-2">Reading and classifying your files...</h2>
+                <div className="flex justify-center">
+                  <img src={ollamaWave} alt="Loading..." />
+                </div>
+              </div>
+            )}
             {preOrderedFiles.map((file) => (
               <div onClick={() => handleFileSelect(file)}>
                 <FileLine
