@@ -10,14 +10,9 @@ from asciitree import LeftAligned
 from asciitree.drawing import BoxStyle, BOX_LIGHT
 from src.loader import get_doc_summaries
 
-# import agentops
-# import litellm
-
 import click
 
 colorama.init()  # Initializes colorama to make it work on Windows as well
-
-# agentops.init(api_key="483ce794-f363-4983-8c66-3f669e12884b")
 
 
 @click.command()
