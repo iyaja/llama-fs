@@ -30,7 +30,6 @@ def main(path, dst_path, auto_yes=False):
     summaries = get_doc_summaries(path)
 
     # Get file tree
-    print(summaries)
     files = create_file_tree(summaries)
 
     BASE_DIR = pathlib.Path(dst_path)
