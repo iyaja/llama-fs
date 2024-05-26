@@ -71,7 +71,7 @@ To serve the application locally using FastAPI, run the command
 
 This will run the server by default on port 8000. The API can be queried using a curl command, and passing in the file path as the argument. For example, on the Downloads folder
    ```bash
-   curl -X POST http://127.0.0.1:8000 \
+   curl -X POST http://127.0.0.1:8000/batch \
     -H "Content-Type: application/json" \
     -d '{"path": "/Users/<username>/Downloads/", "instruction": "string", "incognito": false}'
    ```
