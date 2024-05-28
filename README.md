@@ -1,6 +1,6 @@
 # LlamaFS
 
-<img src="electron-react-app/assets/ollama_wave.gif" width="70%" />
+<img src="electron-react-app/assets/llama_fs.png" width="70%" />
 
 ## Inspiration
 
