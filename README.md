@@ -65,7 +65,10 @@ To install the project, follow these steps:
    ```bash
    pip install -r requirements.txt
    ```
-
+4. (Optional) Install moondream if you want to use the incognito mode
+    ```bash
+    ollama pull moondream
+    ```
 ## Usage
 
 To serve the application locally using FastAPI, run the command
