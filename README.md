@@ -39,13 +39,12 @@ We built LlamaFS on a Python backend, leveraging the Llama3 model through Groq f
 - Find and remove old/unused files
 - We have some really cool ideas for - filesystem diffs are hard...
 
-
 ## Installation
 
 ### Prerequisites
 
 Before installing, ensure you have the following requirements:
-- Python 3.10 or higher
+- Python 3.90 or higher
 - pip (Python package installer)
 
 ### Installing
