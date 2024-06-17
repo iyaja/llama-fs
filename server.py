@@ -10,14 +10,12 @@ import shutil  # Add this import at the beginning of your file
 
 
 import colorama
-import ollama
 import threading
 from asciitree import LeftAligned
 from asciitree.drawing import BOX_LIGHT, BoxStyle
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from groq import Groq
 from llama_index.core import SimpleDirectoryReader
 from pydantic import BaseModel
 from termcolor import colored
@@ -28,13 +26,10 @@ from src.tree_generator import create_file_tree
 from src.watch_utils import Handler
 from src.watch_utils import create_file_tree as create_watch_file_tree
 
-os.environ["GROQ_API_KEY"] = "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"
-
-
 class Request(BaseModel):
     path: Optional[str] = None
     instruction: Optional[str] = None
-    incognito: Optional[bool] = False
+    incognito: Optional[bool] = True
 
 
 class CommitRequest(BaseModel):
@@ -71,9 +66,9 @@ async def batch(request: Request):
         raise HTTPException(
             status_code=400, detail="Path does not exist in filesystem")
 
-    summaries = await get_dir_summaries(path)
+    summaries = await get_dir_summaries(path, incognito=request.incognito)
     # Get file tree
-    files = create_file_tree(summaries)
+    files = create_file_tree(summaries, incognito=request.incognito)
 
     # Recursively create dictionary from file paths
     tree = {}
@@ -107,7 +102,7 @@ async def watch(request: Request):
 
     observer = Observer()
     event_handler = Handler(path, create_watch_file_tree, response_queue)
-    await event_handler.set_summaries()
+    await event_handler.set_summaries(incognito=request.incognito)
     observer.schedule(event_handler, path, recursive=True)
     observer.start()
 

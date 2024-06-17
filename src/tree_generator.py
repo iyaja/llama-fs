@@ -1,6 +1,8 @@
-from groq import Groq
+import litellm
 import json
 import os
+
+from src import select_model
 
 FILE_PROMPT = """
 You will be provided with list of source files and a summary of their contents. For each file, propose a new path and filename, using a directory structure that optimally organizes the files using known conventions and best practices.
@@ -27,15 +29,14 @@ Your response must be a JSON object with the following schema:
 """.strip()
 
 
-def create_file_tree(summaries: list):
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-    chat_completion = client.chat.completions.create(
+def create_file_tree(summaries: list, incognito=True):
+    chat_completion = litellm.completion(
         messages=[
             {"role": "system", "content": FILE_PROMPT},
             {"role": "user", "content": json.dumps(summaries)},
         ],
-        model="llama3-70b-8192",
-        response_format={"type": "json_object"},  # Uncomment if needed
+        model=select_model(incognito),
+        response_format={"type": "json_object"},
         temperature=0,
     )
 
