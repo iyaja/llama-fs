@@ -109,6 +109,7 @@ Here are a few examples of good file naming conventions to emulate, based on the
 ```
 
 Include the above items in your response exactly as is, along all other proposed changes.
+Only return json, no chit chat.
 """.strip()
 
     cmpl = litellm.completion(
@@ -119,7 +120,7 @@ Include the above items in your response exactly as is, along all other proposed
             {"content": json.dumps(fs_events), "role": "user"},
         ],
         model=select_model(watch_incognito),
-        response_format={"type": "json_object"},
         temperature=0,
+        max_retries=5,
     )
     return json.loads(cmpl.choices[0].message.content)["files"]

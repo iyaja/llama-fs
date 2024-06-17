@@ -105,25 +105,20 @@ Write your response a JSON object with the following schema:
     "summary": "summary of the content"
 }
 ```
+
+only return the json, no chit chat
 """.strip()
 
-    max_retries = 5
-    attempt = 0
-    while attempt < max_retries:
-        try:
-            chat_completion = litellm.completion(
-                messages=[
-                    {"role": "system", "content": PROMPT},
-                    {"role": "user", "content": json.dumps(doc)},
-                ],
-                model=select_model(incognito),
-                response_format={"type": "json_object"},
-                temperature=0,
-            )
-            break
-        except Exception as e:
-            print(e)
-            attempt += 1
+
+    chat_completion = litellm.completion(
+        messages=[
+            {"role": "system", "content": PROMPT},
+            {"role": "user", "content": json.dumps(doc)},
+        ],
+        model=select_model(incognito),
+        temperature=0,
+        max_retries=5,
+    )
 
     summary = json.loads(chat_completion.choices[0].message.content)
 

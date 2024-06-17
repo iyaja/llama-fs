@@ -26,6 +26,8 @@ Your response must be a JSON object with the following schema:
     ]
 }
 ```
+
+only return the json, no chit chat
 """.strip()
 
 
@@ -36,8 +38,8 @@ def create_file_tree(summaries: list, incognito=True):
             {"role": "user", "content": json.dumps(summaries)},
         ],
         model=select_model(incognito),
-        response_format={"type": "json_object"},
         temperature=0,
+        max_retries=5,
     )
 
     file_tree = json.loads(chat_completion.choices[0].message.content)["files"]
