@@ -68,6 +68,7 @@ To install the project, follow these steps:
     ollama pull moondream
     ```
    We highly recommend pulling an additional model like llama3 for local ai inference on text files. You can control which ollama model is used by setting the "MODEL" environment variable to a litellm compatible model string.
+5. Setup the environment variables for MODEL OLLAMA_API_BASE and whatever api keys you need
 
 ## Usage
 

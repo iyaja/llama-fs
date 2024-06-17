@@ -13,6 +13,10 @@
                 "server:app",
                 "--reload"
             ],
+            "env": {
+                "OLLAMA_API_BASE": "http://localhost:11434",
+                "MODEL": "ollama/tinyllama"
+            },
             "jinja": true
         }
     ]
