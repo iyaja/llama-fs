@@ -101,7 +101,7 @@ async def watch(request: Request):
     response_queue = queue.Queue()
 
     observer = Observer()
-    event_handler = Handler(path, create_watch_file_tree, response_queue)
+    event_handler = Handler(path, create_watch_file_tree, response_queue, incognito=request.incognito)
     await event_handler.set_summaries(incognito=request.incognito)
     observer.schedule(event_handler, path, recursive=True)
     observer.start()
