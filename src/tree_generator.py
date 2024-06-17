@@ -2,7 +2,7 @@ import litellm
 import json
 import os
 
-from src import select_model
+from src.select_model import select_model
 
 FILE_PROMPT = """
 You will be provided with list of source files and a summary of their contents. For each file, propose a new path and filename, using a directory structure that optimally organizes the files using known conventions and best practices.

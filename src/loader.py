@@ -14,8 +14,7 @@ from llama_index.core import Document, SimpleDirectoryReader
 from llama_index.core.schema import ImageDocument
 from llama_index.core.node_parser import TokenTextSplitter
 from termcolor import colored
-
-from src import select_model
+from src.select_model import select_model
 
 
 # @weave.op()
@@ -123,7 +122,7 @@ Write your response a JSON object with the following schema:
             )
             break
         except Exception as e:
-            print("Error status {}".format(e.status_code))
+            print(e)
             attempt += 1
 
     summary = json.loads(chat_completion.choices[0].message.content)

@@ -7,7 +7,7 @@ import litellm
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
-from src import select_model
+from src.select_model import select_model
 from src.loader import get_dir_summaries, get_file_summary
 
 watch_incognito = False
