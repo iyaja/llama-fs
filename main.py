@@ -2,7 +2,6 @@ import os
 import json
 import argparse
 import pathlib
-from groq import Groq
 from llama_index.core import SimpleDirectoryReader
 import colorama
 import pathlib
@@ -24,10 +23,6 @@ colorama.init()  # Initializes colorama to make it work on Windows as well
 @click.argument("dst_path", type=click.Path())
 @click.option("--auto-yes", is_flag=True, help="Automatically say yes to all prompts")
 def main(src_path, dst_path, auto_yes=False):
-    os.environ["GROQ_API_KEY"] = (
-        "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"
-    )
-
     summaries = asyncio.run(get_dir_summaries(src_path))
 
     # Get file tree

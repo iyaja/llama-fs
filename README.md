@@ -18,11 +18,11 @@ LlamaFS runs in two "modes" - as a batch job (batch mode), and an interactive da
 
 In batch mode, you can send a directory to LlamaFS, and it will return a suggested file structure and organize your files.
 
-In watch mode, LlamaFS starts a daemon that watches your directory. It intercepts all filesystem operations and uses your most recent edits to proactively learn how you rename file. For example, if you create a folder for your 2023 tax documents, and start moving 1-3 files in it, LlamaFS will automatically create and move the files for you!
+In watch mode, LlamaFS starts a daemon that watches your directory. It intercepts all filesystem operations and uses your most recent edits to proactively learn how you rename file. For example, if you create a folder for your 2023 tax documents, and start moving 1-3 files in it, LlamaFS will automatically create and move the files for you! (watch mode defaults to sending files to groq if you have the environment variable "GROQ_API_KEY" set, otherwise through ollama)
 
 Uh... Sending all my personal files to an API provider?! No thank you!
 
-It also has a toggle for "incognito mode," allowing you route every request through Ollama instead of Groq. Since they use the same Llama 3 model, the perform identically.
+BREAKING CHANGE: Now by default, llama-fs uses "incognito mode" (if you have not configured an environment key for "GROQ_API_KEY") allowing you route every request through Ollama instead of Groq. Since they use the same Llama 3 model, the perform identically. To use a different model, set the environment variable "MODEL" to a string which litellm can use as a model like "ollama/llama3" or "groq/llama3-70b-8192". Additionally, you can pick your image model by setting the "IMAGE_MODEL" environment variable to something like "ollama/moondream" or "gpt-4o" (defaults to moondream).
 
 ## How we built it
 
@@ -42,7 +42,7 @@ We built LlamaFS on a Python backend, leveraging the Llama3 model through Groq f
 ### Prerequisites
 
 Before installing, ensure you have the following requirements:
-- Python 3.10 or higher
+- Python 3.9 or higher
 - pip (Python package installer)
 
 ### Installing
@@ -63,11 +63,12 @@ To install the project, follow these steps:
    pip install -r requirements.txt
    ```
 
-4. (Optional) Install moondream if you
-   want to use the incognito mode
+4. Install ollama and pull the model moondream if you want to recognize images
     ```bash
     ollama pull moondream
     ```
+   We highly recommend pulling an additional model like llama3 for local ai inference on text files. You can control which ollama model is used by setting the "MODEL" environment variable to a litellm compatible model string.
+5. Setup the environment variables for MODEL OLLAMA_API_BASE and whatever api keys you need
 
 ## Usage
 

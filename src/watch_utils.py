@@ -3,26 +3,28 @@ import json
 import os
 import time
 
-from groq import Groq
+import litellm
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
+from src.select_model import select_model
 from src.loader import get_dir_summaries, get_file_summary
 
-os.environ["GROQ_API_KEY"] = "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"
-
+watch_incognito = False
 
 class Handler(FileSystemEventHandler):
-    def __init__(self, base_path, callback, queue):
+    def __init__(self, base_path, callback, queue, incognito):
         self.base_path = base_path
         self.callback = callback
         self.queue = queue
+        watch_incognito = incognito
         self.events = []
         print(f"Watching directory {base_path}")
 
-    async def set_summaries(self):
+    async def set_summaries(self, incognito=False):
         print(f"Getting summaries for {self.base_path}")
-        self.summaries = await get_dir_summaries(self.base_path)
+        watch_incognito = incognito
+        self.summaries = await get_dir_summaries(self.base_path, incognito=incognito)
         self.summaries_cache = {s["file_path"]: s for s in self.summaries}
 
     def update_summary(self, file_path):
@@ -31,7 +33,7 @@ class Handler(FileSystemEventHandler):
         if not os.path.exists(path):
             self.summaries_cache.pop(file_path)
             return
-        self.summaries_cache[file_path] = get_file_summary(path)
+        self.summaries_cache[file_path] = get_file_summary(path, watch_incognito)
         self.summaries = list(self.summaries_cache.values())
         self.queue.put(
             {
@@ -107,18 +109,18 @@ Here are a few examples of good file naming conventions to emulate, based on the
 ```
 
 Include the above items in your response exactly as is, along all other proposed changes.
+Only return json, no chit chat.
 """.strip()
 
-    client = Groq()
-    cmpl = client.chat.completions.create(
+    cmpl = litellm.completion(
         messages=[
             {"content": FILE_PROMPT, "role": "system"},
             {"content": json.dumps(summaries), "role": "user"},
             {"content": WATCH_PROMPT, "role": "system"},
             {"content": json.dumps(fs_events), "role": "user"},
         ],
-        model="llama3-70b-8192",
-        response_format={"type": "json_object"},
+        model=select_model(watch_incognito),
         temperature=0,
+        max_retries=5,
     )
     return json.loads(cmpl.choices[0].message.content)["files"]
