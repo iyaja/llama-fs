@@ -22,7 +22,7 @@ In watch mode, LlamaFS starts a daemon that watches your directory. It intercept
 
 Uh... Sending all my personal files to an API provider?! No thank you!
 
-BREAKING CHANGE: Now by default, llama-fs uses "incognito mode" (if you have not configured an environment key for "GROQ_API_KEY") allowing you route every request through Ollama instead of Groq. Since they use the same Llama 3 model, the perform identically. To use a different model, set the environment variable "MODEL" to a string which litellm can use as a model like "ollama/llama3" or "groq/llama3-70b-8192".
+BREAKING CHANGE: Now by default, llama-fs uses "incognito mode" (if you have not configured an environment key for "GROQ_API_KEY") allowing you route every request through Ollama instead of Groq. Since they use the same Llama 3 model, the perform identically. To use a different model, set the environment variable "MODEL" to a string which litellm can use as a model like "ollama/llama3" or "groq/llama3-70b-8192". Additionally, you can pick your image model by setting the "IMAGE_MODEL" environment variable to something like "ollama/moondream" or "gpt-4o" (defaults to moondream).
 
 ## How we built it
 

@@ -3,6 +3,7 @@ import http
 import http.server
 import json
 import os
+import base64
 from collections import defaultdict
 
 import agentops
@@ -132,6 +133,10 @@ only return the json, no chit chat
 
     return summary
 
+def convert_image_to_base64(path: str, file_type: str) -> str:
+    with open(path, 'rb') as image_bytes:
+        base64_image = base64.b64encode(image_bytes.read()).decode("utf-8")
+        return f"data:{file_type};base64,{base64_image}"
 
 async def summarize_image_document(doc: ImageDocument):
     PROMPT = """
@@ -147,23 +152,30 @@ Write your response a JSON object with the following schema:
 ```
 """.strip()
 
-    client = ollama.AsyncClient()
-    chat_completion = await client.chat(
+    chat_completion = litellm.completion(
         messages=[
             {
                 "role": "user",
-                "content": "Summarize the contents of this image.",
-                "images": [doc.image_path],
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Summarize the contents of this image."
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": convert_image_to_base64(doc.image_path, doc.extra_info.get('file_type'))
+                        }
+                    }
+                ],
             },
         ],
-        model="moondream",
-        # format="json",
-        # stream=True,
+        model=os.environ.get('IMAGE_MODEL') if os.environ.get('IMAGE_MODEL') is not None else "ollama/moondream",
     )
 
     summary = {
         "file_path": doc.image_path,
-        "summary": chat_completion["message"]["content"],
+        "summary": chat_completion.choices[0].message.content,
     }
 
     print(colored(summary["file_path"], "green"))  # Print the filename in green
