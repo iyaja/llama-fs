@@ -1,6 +1,6 @@
 import { Button } from '@nextui-org/button';
 import TelescopeIcon from './Icons/TelescopeIcon';
-import './telescope.css';
+import './Telescope.css';
 
 function TelescopeButton(props: any) {
   return (
