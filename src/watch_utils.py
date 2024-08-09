@@ -9,8 +9,6 @@ from watchdog.observers import Observer
 
 from src.loader import get_dir_summaries, get_file_summary
 
-os.environ["GROQ_API_KEY"] = "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"
-
 
 class Handler(FileSystemEventHandler):
     def __init__(self, base_path, callback, queue):
@@ -73,7 +71,8 @@ class Handler(FileSystemEventHandler):
         print("Summaries: ", self.summaries)
         print("Events: ", self.events)
         files = self.callback(
-            summaries=self.summaries, fs_events=json.dumps({"files": self.events})
+            summaries=self.summaries, fs_events=json.dumps(
+                {"files": self.events})
         )
 
         self.queue.put(files)
@@ -117,7 +116,7 @@ Include the above items in your response exactly as is, along all other proposed
             {"content": WATCH_PROMPT, "role": "system"},
             {"content": json.dumps(fs_events), "role": "user"},
         ],
-        model="llama3-70b-8192",
+        model="llama-3.1-70b-versatile",
         response_format={"type": "json_object"},
         temperature=0,
     )

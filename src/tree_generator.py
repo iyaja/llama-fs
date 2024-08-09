@@ -27,14 +27,14 @@ Your response must be a JSON object with the following schema:
 """.strip()
 
 
-def create_file_tree(summaries: list):
+def create_file_tree(summaries: list, session):
     client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
     chat_completion = client.chat.completions.create(
         messages=[
             {"role": "system", "content": FILE_PROMPT},
             {"role": "user", "content": json.dumps(summaries)},
         ],
-        model="llama3-70b-8192",
+        model="llama-3.1-70b-versatile",
         response_format={"type": "json_object"},  # Uncomment if needed
         temperature=0,
     )

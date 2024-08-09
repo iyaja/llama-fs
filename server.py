@@ -8,7 +8,7 @@ from typing import Optional
 import time
 import shutil  # Add this import at the beginning of your file
 
-
+import agentops
 import colorama
 import ollama
 import threading
@@ -28,7 +28,11 @@ from src.tree_generator import create_file_tree
 from src.watch_utils import Handler
 from src.watch_utils import create_file_tree as create_watch_file_tree
 
-os.environ["GROQ_API_KEY"] = "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"
+from dotenv import load_dotenv
+load_dotenv()
+
+agentops.init(tags=["llama-fs"],
+              auto_start_session=False)
 
 
 class Request(BaseModel):
@@ -65,7 +69,7 @@ async def root():
 
 @app.post("/batch")
 async def batch(request: Request):
-
+    session = agentops.start_session(tags=["LlamaFS"])
     path = request.path
     if not os.path.exists(path):
         raise HTTPException(
@@ -73,7 +77,7 @@ async def batch(request: Request):
 
     summaries = await get_dir_summaries(path)
     # Get file tree
-    files = create_file_tree(summaries)
+    files = create_file_tree(summaries, session)
 
     # Recursively create dictionary from file paths
     tree = {}
@@ -93,6 +97,8 @@ async def batch(request: Request):
         # file["dst_path"] = os.path.join(path, file["dst_path"])
         file["summary"] = summaries[files.index(file)]["summary"]
 
+    agentops.end_session(
+        "Success", end_state_reason="Reorganized directory structure")
     return files
 
 

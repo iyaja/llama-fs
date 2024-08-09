@@ -18,7 +18,7 @@ import EnterIcon from './Icons/EnterIcon';
 import ollamaWave from '../../../assets/ollama_wave.gif'
 import llamaFsLogo from '../../../assets/llama_fs.png'
 
-const supportedFileTypes = ['.pdf', '.txt', '.png', '.jpg', '.jpeg'];
+const supportedFileTypes = ['.pdf', '.txt', '.png', '.jpg', '.jpeg', '.pptx', '.docx', '.xlsx'];
 
 function preorderTraversal(
   node: { name: string; children?: any[]; summary?: string; src_path?: string },

@@ -14,8 +14,7 @@ from llama_index.core.node_parser import TokenTextSplitter
 from termcolor import colored
 
 
-# @weave.op()
-# @agentops.record_function("summarize")
+@agentops.record_function("get directory summaries")
 async def get_dir_summaries(path: str):
     doc_dicts = load_documents(path)
     # metadata = process_metadata(doc_dicts)
@@ -41,8 +40,7 @@ async def get_dir_summaries(path: str):
     # ]
 
 
-# @weave.op()
-# @agentops.record_function("load")
+@agentops.record_function("load documents")
 def load_documents(path: str):
     reader = SimpleDirectoryReader(
         input_dir=path,
@@ -72,8 +70,7 @@ def load_documents(path: str):
     return documents
 
 
-# @weave.op()
-# @agentops.record_function("metadata")
+@agentops.record_tool("process_metadata")
 def process_metadata(doc_dicts):
     file_seen = set()
     metadata_list = []
@@ -102,12 +99,12 @@ Write your response a JSON object with the following schema:
     attempt = 0
     while attempt < max_retries:
         try:
-            chat_completion = await client.chat.completions.create(
+            chat_completion = client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": PROMPT},
                     {"role": "user", "content": json.dumps(doc)},
                 ],
-                model="llama3-70b-8192",
+                model="llama-3.1-70b-versatile",
                 response_format={"type": "json_object"},
                 temperature=0,
             )
@@ -119,9 +116,11 @@ Write your response a JSON object with the following schema:
     summary = json.loads(chat_completion.choices[0].message.content)
 
     try:
-        print(colored(summary["file_path"], "green"))  # Print the filename in green
+        # Print the filename in green
+        print(colored(summary["file_path"], "green"))
         print(summary["summary"])  # Print the summary of the contents
-        print("-" * 80 + "\n")  # Print a separator line with spacing for readability
+        # Print a separator line with spacing for readability
+        print("-" * 80 + "\n")
     except KeyError as e:
         print(e)
         print(summary)
@@ -164,9 +163,11 @@ Write your response a JSON object with the following schema:
         "summary": chat_completion["message"]["content"],
     }
 
-    print(colored(summary["file_path"], "green"))  # Print the filename in green
+    # Print the filename in green
+    print(colored(summary["file_path"], "green"))
     print(summary["summary"])  # Print the summary of the contents
-    print("-" * 80 + "\n")  # Print a separator line with spacing for readability
+    # Print a separator line with spacing for readability
+    print("-" * 80 + "\n")
     return summary
 
 
@@ -180,7 +181,7 @@ async def dispatch_summarize_document(doc, client):
 
 
 async def get_summaries(documents):
-    client = AsyncGroq(
+    client = Groq(
         api_key=os.environ.get("GROQ_API_KEY"),
     )
     summaries = await asyncio.gather(
@@ -189,8 +190,7 @@ async def get_summaries(documents):
     return summaries
 
 
-# @weave.op()
-# @agentops.record_function("merge")
+@agentops.record_function("merge")
 def merge_summary_documents(summaries, metadata_list):
     list_summaries = defaultdict(list)
 
@@ -255,16 +255,18 @@ Write your response a JSON object with the following schema:
             {"role": "system", "content": PROMPT},
             {"role": "user", "content": json.dumps(doc)},
         ],
-        model="llama3-70b-8192",
+        model="llama-3.1-70b-versatile",
         response_format={"type": "json_object"},
         temperature=0,
     )
     summary = json.loads(chat_completion.choices[0].message.content)
 
     try:
-        print(colored(summary["file_path"], "green"))  # Print the filename in green
+        # Print the filename in green
+        print(colored(summary["file_path"], "green"))
         print(summary["summary"])  # Print the summary of the contents
-        print("-" * 80 + "\n")  # Print a separator line with spacing for readability
+        # Print a separator line with spacing for readability
+        print("-" * 80 + "\n")
     except KeyError as e:
         print(e)
         print(summary)
@@ -293,8 +295,10 @@ def summarize_image_document_sync(doc: ImageDocument, client):
         "summary": chat_completion["message"]["content"],
     }
 
-    print(colored(summary["file_path"], "green"))  # Print the filename in green
+    # Print the filename in green
+    print(colored(summary["file_path"], "green"))
     print(summary["summary"])  # Print the summary of the contents
-    print("-" * 80 + "\n")  # Print a separator line with spacing for readability
+    # Print a separator line with spacing for readability
+    print("-" * 80 + "\n")
 
     return summary
