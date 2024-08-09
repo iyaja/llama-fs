@@ -66,6 +66,15 @@ To install the project, follow these steps:
    pip install -r requirements.txt
    ```
 
+4. Update your `.env`
+Copy `.env.example` into a new file called `.env`. Then, provide the following API keys:
+* Groq: You can obtain one from [here](https://console.groq.com/keys).
+* AgentOps: You can obtain one from [here](https://app.agentops.ai/settings/projects).
+
+Groq is used for fast cloud inference but can be replaced with Ollama in the code directly (TODO.)
+
+AgentOps is used for logging and monitoring and will report the latency, cost per session, and give you a full session replay of each LlamaFS call.
+
 ## Usage
 
 To serve the application locally using FastAPI, run the command
