@@ -2,6 +2,8 @@ from groq import Groq
 import json
 import os
 
+import ollama
+
 FILE_PROMPT = """
 You will be provided with list of source files and a summary of their contents. For each file, propose a new path and filename, using a directory structure that optimally organizes the files using known conventions and best practices.
 Follow good naming conventions. Here are a few guidelines
@@ -27,7 +29,7 @@ Your response must be a JSON object with the following schema:
 """.strip()
 
 
-def create_file_tree(summaries: list, session):
+def create_file_tree_groq(summaries: list, session):
     client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
     chat_completion = client.chat.completions.create(
         messages=[
@@ -41,3 +43,28 @@ def create_file_tree(summaries: list, session):
 
     file_tree = json.loads(chat_completion.choices[0].message.content)["files"]
     return file_tree
+
+def create_file_tree(summaries: list, session):
+
+    client = ollama.Client()
+    chat_completion = client.chat(
+        messages = [
+            {
+                "role": "system",
+                "content": FILE_PROMPT},
+            {
+                "role": "user",
+                "content": json.dumps(summaries),
+            },
+        ],
+        model = "llama3.2",
+        format = "json",
+        stream = False,
+        options = {
+            "temperature": 0
+        }
+    )
+
+    message_content = chat_completion['message']['content']
+    file_tree = json.loads(message_content)
+    return file_tree['files']
