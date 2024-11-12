@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 import time
 import shutil  # Add this import at the beginning of your file
+import weave  # Add this import to fix the undefined name 'weave' error
 
 import agentops
 import colorama
@@ -31,8 +32,13 @@ from src.watch_utils import create_file_tree as create_watch_file_tree
 from dotenv import load_dotenv
 load_dotenv()
 
-agentops.init(tags=["llama-fs"],
-              auto_start_session=False)
+weave.init("llama-fs")
+
+agentops.init(
+    api_key=os.getenv("AGENT_OPS_API_KEY"),
+    tags=["llama-fs"],
+    auto_start_session=False
+)
 
 
 class Request(BaseModel):

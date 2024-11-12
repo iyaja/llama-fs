@@ -88,6 +88,7 @@ def process_metadata(doc_dicts):
 
 
 async def summarize_document(doc, client):
+    """If successful, returns a summary object of the document otherwsise raises an exception"""
     PROMPT = """
 You will be provided with the contents of a file along with its metadata. Provide a summary of the contents. The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary. Make the summary as specific to the file as possible.
 
@@ -118,6 +119,10 @@ Write your response a JSON object with the following schema:
         except Exception as e:
             print("Error status {}".format(e.status_code))
             attempt += 1
+
+    if attempt == max_retries:
+        doc_metadata = {k: v for k, v in doc.items() if k != "content"}
+        raise Exception("Failed to get completion for: {}".format(doc_metadata))
 
     summary = json.loads(chat_completion.choices[0].message.content)
 
@@ -178,10 +183,16 @@ Write your response a JSON object with the following schema:
 
 
 async def dispatch_summarize_document(doc, client):
+    """If document type supported then it returns a summary object of the document if successful, otherwise returns None"""
     if isinstance(doc, ImageDocument):
         return await summarize_image_document(doc, client)
     elif isinstance(doc, Document):
-        return await summarize_document({"content": doc.text, **doc.metadata}, client)
+        try:
+            summary = await summarize_document({"content": doc.text, **doc.metadata}, client)
+        except Exception as e:
+            print(e)
+            summary = None
+        return summary
     else:
         raise ValueError("Document type not supported")
 
@@ -193,6 +204,7 @@ async def get_summaries(documents):
     summaries = await asyncio.gather(
         *[dispatch_summarize_document(doc, client) for doc in documents]
     )
+    summaries = [s for s in summaries if s is not None]
     return summaries
 
 
