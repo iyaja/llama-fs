@@ -34,8 +34,9 @@ load_dotenv()
 
 weave.init("llama-fs")
 
+AGENT_OPS_API_KEY = os.getenv("AGENT_OPS_API_KEY")
 agentops.init(
-    api_key=os.getenv("AGENT_OPS_API_KEY"),
+    api_key=AGENT_OPS_API_KEY if AGENT_OPS_API_KEY else None,
     tags=["llama-fs"],
     auto_start_session=False
 )
