@@ -195,3 +195,6 @@ electron-react-app/*.scss.d.ts
 
 # Custom
 test_dir/
+electron-react-app/release/app/node_modules/.package-lock.json
+electron-react-app/src/node_modules/.package-lock.json
+electron-react-app/package-lock.json
