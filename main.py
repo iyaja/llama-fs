@@ -2,12 +2,19 @@ import os
 import json
 import argparse
 import pathlib
+import warnings
 from llama_index.core import SimpleDirectoryReader
 import colorama
 import pathlib
 from pathlib import Path
 from termcolor import colored
 from asciitree import LeftAligned
+from tqdm import tqdm
+
+# Suppress only harmless warnings, keep important error logging
+warnings.filterwarnings("ignore", message=".*Palette images with Transparency.*")
+warnings.filterwarnings("ignore", message=".*Ignoring wrong pointing object.*")
+# Don't suppress all PIL warnings - some might be important
 from asciitree.drawing import BoxStyle, BOX_LIGHT
 from src.loader import get_dir_summaries
 from src.tree_generator import create_file_tree
@@ -23,11 +30,16 @@ colorama.init()  # Initializes colorama to make it work on Windows as well
 @click.argument("dst_path", type=click.Path())
 @click.option("--auto-yes", is_flag=True, help="Automatically say yes to all prompts")
 def main(src_path, dst_path, auto_yes=False):
+    print(f"🔍 Analyzing files in: {src_path}")
+    print(f"📁 Target directory: {dst_path}")
 
     summaries = asyncio.run(get_dir_summaries(src_path))
+    print(f"✅ Found {len(summaries)} files to analyze")
 
     # Get file tree
+    print("🤖 Generating file organization structure...")
     files = create_file_tree(summaries)
+    print(f"✅ Generated organization plan for {len(files)} files")
 
     BASE_DIR = pathlib.Path(dst_path)
     BASE_DIR.mkdir(exist_ok=True)
@@ -56,12 +68,15 @@ def main(src_path, dst_path, auto_yes=False):
         click.echo("Operation cancelled.")
         return
 
-    for file in files:
+    print("📝 Creating directory structure...")
+    for file in tqdm(files, desc="Creating files"):
         file["path"] = pathlib.Path(file["dst_path"])
         # Create file in specified base directory
         (BASE_DIR / file["path"]).parent.mkdir(parents=True, exist_ok=True)
         with open(BASE_DIR / file["path"], "w") as f:
             f.write("")
+
+    print("✅ Directory structure created successfully!")
 
 
 if __name__ == "__main__":

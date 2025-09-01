@@ -1,19 +1,24 @@
 import asyncio
 import json
 import os
+import warnings
 from collections import defaultdict
 
-import agentops
 import colorama
 import ollama
 import weave
+from tqdm.asyncio import tqdm
+
+# Suppress only harmless warnings, keep important error logging
+warnings.filterwarnings("ignore", message=".*Palette images with Transparency.*")
+warnings.filterwarnings("ignore", message=".*Ignoring wrong pointing object.*")
+# Don't suppress all PIL warnings - some might be important
 from llama_index.core import Document, SimpleDirectoryReader
 from llama_index.core.schema import ImageDocument
 from llama_index.core.node_parser import TokenTextSplitter
 from termcolor import colored
 
 
-@agentops.record_function("get directory summaries")
 async def get_dir_summaries(path: str):
     doc_dicts = load_documents(path)
     # metadata = process_metadata(doc_dicts)
@@ -39,7 +44,6 @@ async def get_dir_summaries(path: str):
     # ]
 
 
-@agentops.record_function("load documents")
 def load_documents(path: str):
     reader = SimpleDirectoryReader(
         input_dir=path,
@@ -75,7 +79,6 @@ def load_documents(path: str):
     return documents
 
 
-@agentops.record_tool("process_metadata")
 def process_metadata(doc_dicts):
     file_seen = set()
     metadata_list = []
@@ -150,16 +153,15 @@ Write your response a JSON object with the following schema:
     client = ollama.AsyncClient()
     chat_completion = await client.chat(
         messages=[
-            # {"role": "system", "content": "Respond with one short sentence."},
+            {"role": "system", "content": PROMPT},
             {
                 "role": "user",
                 "content": "Summarize the contents of this image.",
                 "images": [doc.image_path],
             },
         ],
-        model="llama3.1:8b",
-        # format="json",
-        # stream=True,
+        model="moondream",
+        format="json",
         options={"num_predict": 128},
     )
 
@@ -187,13 +189,25 @@ async def dispatch_summarize_document(doc, client):
 
 async def get_summaries(documents):
     client = ollama.AsyncClient()
-    summaries = await asyncio.gather(
-        *[dispatch_summarize_document(doc, client) for doc in documents]
-    )
+    print(f"📄 Processing {len(documents)} documents...")
+
+    # Create tasks with progress tracking
+    tasks = [dispatch_summarize_document(doc, client) for doc in documents]
+
+    # Use tqdm for progress tracking
+    summaries = []
+    for task in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Summarizing documents"):
+        try:
+            result = await task
+            summaries.append(result)
+        except Exception as e:
+            print(f"❌ Error processing document: {e}")
+            # Add a placeholder for failed documents
+            summaries.append({"error": str(e)})
+
     return summaries
 
 
-@agentops.record_function("merge")
 def merge_summary_documents(summaries, metadata_list):
     list_summaries = defaultdict(list)
 
@@ -276,18 +290,31 @@ Write your response a JSON object with the following schema:
 
 
 def summarize_image_document_sync(doc: ImageDocument, client):
+    PROMPT = """
+You will be provided with an image along with its metadata. Provide a summary of the image contents. The purpose of the summary is to organize files based on their content. To this end provide a concise but informative summary. Make the summary as specific to the file as possible.
+
+Write your response a JSON object with the following schema:
+
+```json
+{
+    "file_path": "path to the file including name",
+    "summary": "summary of the content"
+}
+```
+""".strip()
+
     client = ollama.Client()
     chat_completion = client.chat(
         messages=[
+            {"role": "system", "content": PROMPT},
             {
                 "role": "user",
                 "content": "Summarize the contents of this image.",
                 "images": [doc.image_path],
             },
         ],
-        model="llama3.1:8b",
-        # format="json",
-        # stream=True,
+        model="moondream",
+        format="json",
         options={"num_predict": 128},
     )
 

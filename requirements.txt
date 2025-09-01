@@ -9,9 +9,8 @@ click
 asciitree
 fastapi
 weave
-agentops
 langchain
 langchain_core
 watchdog
-agentops
 python-dotenv
+tqdm
