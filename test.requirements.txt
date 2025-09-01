@@ -1,0 +1,21 @@
+# LlamaFS Test Dependencies
+# Python 3.12.10+ required for compatibility
+# Core testing framework
+pytest==8.4.1
+pytest-asyncio==1.1.0
+
+# FastAPI testing
+fastapi==0.116.1
+httpx==0.28.1
+
+# Mocking and test utilities
+pytest-mock==3.14.1
+pytest-shutil==1.8.1
+
+# Type checking and validation
+pydantic==2.11.7
+typing-extensions>=4.7.0
+
+# Optional: For more advanced testing features
+pytest-cov==6.2.1  # Coverage reporting
+pytest-xdist==3.8.0  # Parallel test execution

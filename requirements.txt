@@ -1,16 +1,28 @@
-ollama
-chromadb
-llama-index
-litellm
-docx2txt
-colorama
-termcolor
-click
-asciitree
-fastapi
-weave
-langchain
-langchain_core
-watchdog
-python-dotenv
-tqdm
+# LlamaFS Main Dependencies
+# Python 3.12.10+ required for compatibility
+
+# Core LLM and AI libraries
+ollama==0.5.1
+chromadb==1.0.20
+llama-index==0.13.3
+litellm==1.74.0
+weave==0.52.5
+
+# LangChain ecosystem
+langchain==0.3.22
+langchain_core==0.3.49
+
+# File processing and utilities
+docx2txt==0.9
+watchdog==6.0.0
+python-dotenv==1.1.0
+tqdm==4.67.1
+
+# UI and display
+colorama==0.4.6
+termcolor==2.4.0
+click==8.2.1
+asciitree==0.3.3
+
+# Web framework
+fastapi==0.116.1
