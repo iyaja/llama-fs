@@ -21,6 +21,7 @@ from src.tree_generator import create_file_tree
 import asyncio
 from dotenv import load_dotenv
 import click
+
 load_dotenv()
 colorama.init()  # Initializes colorama to make it work on Windows as well
 

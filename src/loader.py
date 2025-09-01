@@ -193,7 +193,9 @@ async def get_summaries(documents, max_concurrent: int = 5):
     # Safety check: limit the number of documents to prevent system overload
     max_documents = 2000  # Reasonable limit
     if len(documents) > max_documents:
-        print(f"⚠️  Too many documents to process ({len(documents)}). Limiting to {max_documents} documents.")
+        print(
+            f"⚠️  Too many documents to process ({len(documents)}). Limiting to {max_documents} documents."
+        )
         documents = documents[:max_documents]
 
     print(f"📄 Processing {len(documents)} documents...")
@@ -210,15 +212,21 @@ async def get_summaries(documents, max_concurrent: int = 5):
     summaries = []
 
     for i in range(0, len(documents), batch_size):
-        batch = documents[i:i + batch_size]
-        print(f"📦 Processing document batch {i//batch_size + 1}/{(len(documents) + batch_size - 1)//batch_size} ({len(batch)} documents)")
+        batch = documents[i : i + batch_size]
+        print(
+            f"📦 Processing document batch {i//batch_size + 1}/{(len(documents) + batch_size - 1)//batch_size} ({len(batch)} documents)"
+        )
 
         # Create tasks for this batch
         tasks = [process_document(doc) for doc in batch]
 
         # Process batch with progress tracking
         batch_results = []
-        for task in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc=f"Batch {i//batch_size + 1}"):
+        for task in tqdm(
+            asyncio.as_completed(tasks),
+            total=len(tasks),
+            desc=f"Batch {i//batch_size + 1}",
+        ):
             try:
                 result = await task
                 batch_results.append(result)

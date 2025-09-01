@@ -1,3 +1,28 @@
+"""
+LlamaFS FastAPI Server
+
+This module provides the main FastAPI server for LlamaFS, a self-organizing file manager.
+It offers both legacy LLM-based file organization and new smart categorization endpoints.
+
+Key Features:
+- Smart categorization system using file extensions and patterns
+- Legacy LLM-based content analysis for enhanced organization
+- Real-time file watching with automatic organization suggestions
+- Batch processing for organizing existing file collections
+- Individual file move operations
+
+Endpoints:
+- /quick-stats: Get instant file statistics without LLM analysis
+- /smart-batch: Preview smart organization without moving files
+- /smart-batch-execute: Execute smart organization automatically
+- /batch: Legacy preview with LLM analysis
+- /batch-execute: Legacy execution with LLM analysis
+- /watch: Real-time file watching and organization suggestions
+- /commit: Move individual files to new locations
+
+Author: LlamaFS Team
+"""
+
 import json
 import os
 import pathlib
@@ -7,7 +32,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 import time
-import shutil  # Add this import at the beginning of your file
+import shutil  # For file operations
 
 # Suppress only harmless warnings, keep important error logging
 warnings.filterwarnings("ignore", message=".*Palette images with Transparency.*")
@@ -34,26 +59,31 @@ from src.watch_utils import create_file_tree as create_watch_file_tree
 from src.enhanced_loader import EnhancedFileLoader
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
 class Request(BaseModel):
-    path: Optional[str] = None
-    instruction: Optional[str] = None
-    incognito: Optional[bool] = False
+    """Request model for batch operations and file organization endpoints."""
+
+    path: Optional[str] = None  # Directory path to organize
+    instruction: Optional[str] = None  # Optional user instructions for organization
+    incognito: Optional[bool] = (
+        False  # Whether to run in incognito mode (not implemented yet)
+    )
 
 
 class CommitRequest(BaseModel):
-    base_path: str
-    src_path: str  # Relative to base_path
-    dst_path: str  # Relative to base_path
+    """Request model for individual file move operations."""
+
+    base_path: str  # Base directory path
+    src_path: str  # Source file path relative to base_path
+    dst_path: str  # Destination file path relative to base_path
 
 
 app = FastAPI()
 
-origins = [
-    "*"
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -73,8 +103,7 @@ async def root():
 async def batch(request: Request):
     path = request.path
     if not os.path.exists(path):
-        raise HTTPException(
-            status_code=400, detail="Path does not exist in filesystem")
+        raise HTTPException(status_code=400, detail="Path does not exist in filesystem")
 
     summaries = await get_dir_summaries(path)
     # Get file tree
@@ -103,11 +132,10 @@ async def batch(request: Request):
 
 @app.post("/batch-execute")
 async def batch_execute(request: Request):
-    """Execute the suggested file moves from batch operation"""
+    # Execute the suggested file moves from batch operation
     path = request.path
     if not os.path.exists(path):
-        raise HTTPException(
-            status_code=400, detail="Path does not exist in filesystem")
+        raise HTTPException(status_code=400, detail="Path does not exist in filesystem")
 
     summaries = await get_dir_summaries(path)
     # Get file tree
@@ -125,11 +153,13 @@ async def batch_execute(request: Request):
         try:
             # Skip if source and destination are the same
             if src_path == dst_path:
-                results.append({
-                    "file": file["src_path"],
-                    "status": "skipped",
-                    "reason": "Source and destination are the same"
-                })
+                results.append(
+                    {
+                        "file": file["src_path"],
+                        "status": "skipped",
+                        "reason": "Source and destination are the same",
+                    }
+                )
                 continue
 
             # Ensure the destination directory exists
@@ -139,31 +169,33 @@ async def batch_execute(request: Request):
             # Move the file
             if os.path.isfile(src_path):
                 shutil.move(src_path, dst_path)
-                results.append({
-                    "file": file["src_path"],
-                    "status": "moved",
-                    "from": file["src_path"],
-                    "to": file["dst_path"]
-                })
+                results.append(
+                    {
+                        "file": file["src_path"],
+                        "status": "moved",
+                        "from": file["src_path"],
+                        "to": file["dst_path"],
+                    }
+                )
             else:
-                errors.append({
-                    "file": file["src_path"],
-                    "status": "error",
-                    "reason": "Source file does not exist"
-                })
+                errors.append(
+                    {
+                        "file": file["src_path"],
+                        "status": "error",
+                        "reason": "Source file does not exist",
+                    }
+                )
 
         except Exception as e:
-            errors.append({
-                "file": file["src_path"],
-                "status": "error",
-                "reason": str(e)
-            })
+            errors.append(
+                {"file": file["src_path"], "status": "error", "reason": str(e)}
+            )
 
     return {
         "message": f"Batch execution completed. {len(results)} files processed, {len(errors)} errors.",
         "results": results,
         "errors": errors,
-        "total_files": len(files)
+        "total_files": len(files),
     }
 
 
@@ -171,8 +203,7 @@ async def batch_execute(request: Request):
 async def watch(request: Request):
     path = request.path
     if not os.path.exists(path):
-        raise HTTPException(
-            status_code=400, detail="Path does not exist in filesystem")
+        raise HTTPException(status_code=400, detail="Path does not exist in filesystem")
 
     response_queue = queue.Queue()
 
@@ -196,12 +227,12 @@ async def watch(request: Request):
 
 @app.post("/commit")
 async def commit(request: CommitRequest):
-    print('*'*80)
+    print("*" * 80)
     print(request)
     print(request.base_path)
     print(request.src_path)
     print(request.dst_path)
-    print('*'*80)
+    print("*" * 80)
 
     src = os.path.join(request.base_path, request.src_path)
     dst = os.path.join(request.base_path, request.dst_path)
@@ -223,8 +254,7 @@ async def commit(request: CommitRequest):
             shutil.move(src, dst)
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"An error occurred while moving the resource: {e}"
+            status_code=500, detail=f"An error occurred while moving the resource: {e}"
         )
 
     return {"message": "Commit successful"}
@@ -232,11 +262,29 @@ async def commit(request: CommitRequest):
 
 @app.post("/smart-batch")
 async def smart_batch(request: Request):
-    """Smart batch processing using enhanced categorization"""
+    """
+    Smart batch processing using enhanced categorization.
+
+    This endpoint provides a preview of how files would be organized using the smart
+    categorization system. It combines file extension-based categorization with optional
+    LLM content analysis for enhanced organization.
+
+    Features:
+    - Fast extension-based categorization for most files
+    - LLM content analysis for documents and images
+    - Respects existing folder structures
+    - Exempts development and system files
+    - Provides detailed statistics and move plan
+
+    Args:
+        request: Request object containing path and optional instructions
+
+    Returns:
+        Dictionary containing organized structure, move plan, statistics, and tree visualization
+    """
     path = request.path
     if not os.path.exists(path):
-        raise HTTPException(
-            status_code=400, detail="Path does not exist in filesystem")
+        raise HTTPException(status_code=400, detail="Path does not exist in filesystem")
 
     # Use enhanced loader for efficient categorization
     # Use conservative settings to prevent system overload
@@ -261,30 +309,35 @@ async def smart_batch(request: Request):
         "move_plan": result["move_plan"],
         "statistics": result["statistics"],
         "tree": tree,
-        "total_files": result["total_files"]
+        "total_files": result["total_files"],
     }
 
 
 @app.post("/smart-batch-execute")
 async def smart_batch_execute(request: Request):
     """Execute smart batch organization"""
-    try:
-        path = request.path
-        if not os.path.exists(path):
-            raise HTTPException(
-                status_code=400, detail="Path does not exist in filesystem")
+    path = request.path
+    if not path or not os.path.exists(path):
+        raise HTTPException(
+            status_code=400, detail="Path does not exist in filesystem"
+        )
 
+    try:
         print(f"🔍 Starting smart batch execution for: {path}")
 
         # Use enhanced loader for efficient categorization (without LLM by default)
         # Use conservative settings to prevent system overload
         enhanced_loader = EnhancedFileLoader(max_concurrent_tasks=3)
-        result = await enhanced_loader.get_organized_files(path, use_llm_for_content=False)
+        result = await enhanced_loader.get_organized_files(
+            path, use_llm_for_content=False
+        )
 
         print(f"✅ Generated organization plan with {len(result['move_plan'])} files")
     except Exception as e:
         print(f"❌ Error in smart_batch_execute: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate organization plan: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to generate organization plan: {str(e)}"
+        )
 
     # Track execution results
     results = []
@@ -301,22 +354,26 @@ async def smart_batch_execute(request: Request):
         try:
             # Skip if this is flagged as an existing folder (already organized)
             if file_info.get("skip_move", False):
-                results.append({
-                    "file": file_info["src_path"],
-                    "status": "skipped",
-                    "reason": "File already in organized folder",
-                    "category": file_info["category"],
-                    "subcategory": file_info["subcategory"]
-                })
+                results.append(
+                    {
+                        "file": file_info["src_path"],
+                        "status": "skipped",
+                        "reason": "File already in organized folder",
+                        "category": file_info["category"],
+                        "subcategory": file_info["subcategory"],
+                    }
+                )
                 continue
 
             # Skip if source and destination are the same
             if src_path == dst_path:
-                results.append({
-                    "file": file_info["src_path"],
-                    "status": "skipped",
-                    "reason": "Source and destination are the same"
-                })
+                results.append(
+                    {
+                        "file": file_info["src_path"],
+                        "status": "skipped",
+                        "reason": "Source and destination are the same",
+                    }
+                )
                 continue
 
             # Ensure the destination directory exists
@@ -326,36 +383,38 @@ async def smart_batch_execute(request: Request):
             # Move the file
             if os.path.isfile(src_path):
                 shutil.move(src_path, dst_path)
-                results.append({
-                    "file": file_info["src_path"],
-                    "status": "moved",
-                    "from": file_info["src_path"],
-                    "to": file_info["dst_path"],
-                    "category": file_info["category"],
-                    "subcategory": file_info["subcategory"]
-                })
+                results.append(
+                    {
+                        "file": file_info["src_path"],
+                        "status": "moved",
+                        "from": file_info["src_path"],
+                        "to": file_info["dst_path"],
+                        "category": file_info["category"],
+                        "subcategory": file_info["subcategory"],
+                    }
+                )
             else:
-                errors.append({
-                    "file": file_info["src_path"],
-                    "status": "error",
-                    "reason": "Source file does not exist"
-                })
+                errors.append(
+                    {
+                        "file": file_info["src_path"],
+                        "status": "error",
+                        "reason": "Source file does not exist",
+                    }
+                )
 
         except Exception as e:
             error_msg = f"Failed to process {file_info['src_path']}: {str(e)}"
             print(f"❌ {error_msg}")
-            errors.append({
-                "file": file_info["src_path"],
-                "status": "error",
-                "reason": str(e)
-            })
+            errors.append(
+                {"file": file_info["src_path"], "status": "error", "reason": str(e)}
+            )
 
     return {
         "message": f"Smart batch execution completed. {len(results)} files processed, {len(errors)} errors.",
         "results": results,
         "errors": errors,
         "statistics": result["statistics"],
-        "total_files": result["total_files"]
+        "total_files": result["total_files"],
     }
 
 
@@ -363,14 +422,10 @@ async def smart_batch_execute(request: Request):
 async def quick_stats(request: Request):
     """Get quick statistics about files without LLM analysis"""
     path = request.path
-    if not os.path.exists(path):
-        raise HTTPException(
-            status_code=400, detail="Path does not exist in filesystem")
+    if not path or not os.path.exists(path):
+        raise HTTPException(status_code=400, detail="Path does not exist in filesystem")
 
     enhanced_loader = EnhancedFileLoader()
     stats = enhanced_loader.get_quick_stats(path)
 
-    return {
-        "message": "Quick statistics generated",
-        "statistics": stats
-    }
+    return {"message": "Quick statistics generated", "statistics": stats}

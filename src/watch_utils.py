@@ -71,8 +71,7 @@ class Handler(FileSystemEventHandler):
         print("Summaries: ", self.summaries)
         print("Events: ", self.events)
         files = self.callback(
-            summaries=self.summaries, fs_events=json.dumps(
-                {"files": self.events})
+            summaries=self.summaries, fs_events=json.dumps({"files": self.events})
         )
 
         self.queue.put(files)

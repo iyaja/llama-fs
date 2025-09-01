@@ -1,110 +1,322 @@
+"""
+Smart Categorization System for LlamaFS
+
+This module provides an efficient file categorization system that organizes files
+into logical categories based on file extensions, naming patterns, and folder context.
+It serves as a fast alternative to LLM-based categorization while still providing
+intelligent organization.
+
+Key Features:
+- Extension-based categorization for instant organization
+- Filename pattern matching for enhanced categorization
+- MIME type detection for unknown extensions
+- Locationally exempt files (development/system files stay in place)
+- Existing folder detection to avoid disrupting organized structures
+- Hierarchical organization with categories and subcategories
+
+Categories:
+- documents: PDFs, Word docs, text files
+- spreadsheets: Excel, CSV files
+- presentations: PowerPoint files
+- images: Photos, graphics, screenshots
+- videos: Video files and recordings
+- audio: Music and audio files
+- 3d-printing: STL, GCODE files
+- installers: Setup and installation files
+- executables: Programs and scripts
+- archives: Compressed files
+- code: Source code files
+- data: Configuration and data files
+
+"""
+
 import os
 import re
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import mimetypes
 
+
 class SmartCategorizer:
     """
     Efficient file categorization system that uses file extensions and naming patterns
     to organize files into logical categories before using LLM for content analysis.
+
+    This class provides fast, rule-based file organization that can be used standalone
+    or as a preprocessing step before LLM analysis. It respects existing folder structures
+    and exempts development files from being moved.
     """
 
     def __init__(self):
         # Define file extensions that should be locationally-exempt (stay where they are)
         self.locationally_exempt_extensions = {
-            ".c", ".ts", ".js", ".tsx", ".jsx", ".dll", ".bat", ".ps1", ".h", ".bin",
-            ".rst", ".py", ".log", ".jar", ".cab", ".ini", ".cfg", ".conf", ".config",
-            ".lock", ".pid", ".tmp", ".temp", ".cache", ".db", ".sqlite", ".sqlite3",
-            ".env", ".gitignore", ".gitattributes", ".dockerignore", ".editorconfig",
-            ".eslintrc", ".prettierrc", ".babelrc", ".webpack", ".rollup", ".vite",
-            ".yarnrc", ".npmrc", ".bowerrc", ".composer", ".gemfile", ".requirements",
-            ".makefile", ".cmake", ".gradle", ".maven", ".ant", ".sbt", ".cabal",
-            ".stack", ".cargo", ".go.mod", ".go.sum", ".package.json", ".yarn.lock",
-            ".package-lock.json", ".pnpm-lock.yaml", ".bun.lockb", ".poetry.lock",
-            ".pipfile", ".pipfile.lock", ".conda.yml", ".environment.yml", ".setup.py",
-            ".setup.cfg", ".pyproject.toml", ".tox.ini", ".pytest.ini", ".coverage",
-            ".coveragerc", ".flake8", ".mypy.ini", ".isort.cfg", ".black", ".pre-commit",
-            ".github", ".gitlab-ci", ".travis.yml", ".appveyor.yml", ".circleci",
-            ".jenkins", ".azure-pipelines", ".bitbucket-pipelines", ".drone",
-            ".woodpecker", ".buildkite", ".semaphore", ".teamcity", ".bamboo",
-            ".codeship", ".wercker", ".shippable", ".magnum", ".solano", ".strider",
-            ".surf", ".taskcluster", ".tfs", ".vsts", ".xcode", ".xcodeproj", ".xcworkspace",
-            ".sln", ".vcxproj", ".vcproj", ".dsp", ".dsw", ".ncb", ".opt", ".plg",
-            ".aps", ".clw", ".bsc", ".sbr", ".pdb", ".ilk", ".exp", ".lib", ".obj",
-            ".res", ".rc", ".def", ".map", ".tlog", ".lastbuildstate", ".unsuccessfulbuild",
-            ".manifest", ".pch", ".idb", ".ipdb", ".iobj", ".ipch", ".sdf", ".opensdf",
-            ".suo", ".user", ".userosscache", ".sln.docstates", ".vspscc", ".vssscc",
-            ".builds", ".pidb", ".svclog", ".scc", ".vssscc", ".vssscc", ".vssscc"
+            ".c",
+            ".ts",
+            ".js",
+            ".tsx",
+            ".jsx",
+            ".dll",
+            ".bat",
+            ".ps1",
+            ".h",
+            ".bin",
+            ".rst",
+            ".py",
+            ".log",
+            ".jar",
+            ".cab",
+            ".ini",
+            ".cfg",
+            ".conf",
+            ".config",
+            ".lock",
+            ".pid",
+            ".tmp",
+            ".temp",
+            ".cache",
+            ".db",
+            ".sqlite",
+            ".sqlite3",
+            ".env",
+            ".gitignore",
+            ".gitattributes",
+            ".dockerignore",
+            ".editorconfig",
+            ".eslintrc",
+            ".prettierrc",
+            ".babelrc",
+            ".webpack",
+            ".rollup",
+            ".vite",
+            ".yarnrc",
+            ".npmrc",
+            ".bowerrc",
+            ".composer",
+            ".gemfile",
+            ".requirements",
+            ".makefile",
+            ".cmake",
+            ".gradle",
+            ".maven",
+            ".ant",
+            ".sbt",
+            ".cabal",
+            ".stack",
+            ".cargo",
+            ".go.mod",
+            ".go.sum",
+            ".package.json",
+            ".yarn.lock",
+            ".package-lock.json",
+            ".pnpm-lock.yaml",
+            ".bun.lockb",
+            ".poetry.lock",
+            ".pipfile",
+            ".pipfile.lock",
+            ".conda.yml",
+            ".environment.yml",
+            ".setup.py",
+            ".setup.cfg",
+            ".pyproject.toml",
+            ".tox.ini",
+            ".pytest.ini",
+            ".coverage",
+            ".coveragerc",
+            ".flake8",
+            ".mypy.ini",
+            ".isort.cfg",
+            ".black",
+            ".pre-commit",
+            ".github",
+            ".gitlab-ci",
+            ".travis.yml",
+            ".appveyor.yml",
+            ".circleci",
+            ".jenkins",
+            ".azure-pipelines",
+            ".bitbucket-pipelines",
+            ".drone",
+            ".woodpecker",
+            ".buildkite",
+            ".semaphore",
+            ".teamcity",
+            ".bamboo",
+            ".codeship",
+            ".wercker",
+            ".shippable",
+            ".magnum",
+            ".solano",
+            ".strider",
+            ".surf",
+            ".taskcluster",
+            ".tfs",
+            ".vsts",
+            ".xcode",
+            ".xcodeproj",
+            ".xcworkspace",
+            ".sln",
+            ".vcxproj",
+            ".vcproj",
+            ".dsp",
+            ".dsw",
+            ".ncb",
+            ".opt",
+            ".plg",
+            ".aps",
+            ".clw",
+            ".bsc",
+            ".sbr",
+            ".pdb",
+            ".ilk",
+            ".exp",
+            ".lib",
+            ".obj",
+            ".res",
+            ".rc",
+            ".def",
+            ".map",
+            ".tlog",
+            ".lastbuildstate",
+            ".unsuccessfulbuild",
+            ".manifest",
+            ".pch",
+            ".idb",
+            ".ipdb",
+            ".iobj",
+            ".ipch",
+            ".sdf",
+            ".opensdf",
+            ".suo",
+            ".user",
+            ".userosscache",
+            ".sln.docstates",
+            ".vspscc",
+            ".vssscc",
+            ".builds",
+            ".pidb",
+            ".svclog",
+            ".scc",
+            ".vssscc",
+            ".vssscc",
+            ".vssscc",
         }
 
         # Define file type categories with extensions and naming patterns
         self.categories = {
             "documents": {
                 "extensions": [".pdf", ".doc", ".docx", ".txt", ".md", ".rtf", ".odt"],
-                "patterns": ["document", "report", "manual", "guide", "readme", "license"],
-                "description": "Text documents, PDFs, and written content"
+                "patterns": [
+                    "document",
+                    "report",
+                    "manual",
+                    "guide",
+                    "readme",
+                    "license",
+                ],
+                "description": "Text documents, PDFs, and written content",
             },
             "spreadsheets": {
                 "extensions": [".xls", ".xlsx", ".csv", ".ods"],
                 "patterns": ["spreadsheet", "data", "table", "list", "inventory"],
-                "description": "Spreadsheets and tabular data"
+                "description": "Spreadsheets and tabular data",
             },
             "presentations": {
                 "extensions": [".ppt", ".pptx", ".odp"],
                 "patterns": ["presentation", "slides", "deck", "pitch"],
-                "description": "Presentation files and slides"
+                "description": "Presentation files and slides",
             },
             "images": {
-                "extensions": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg", ".webp", ".ai"],
+                "extensions": [
+                    ".jpg",
+                    ".jpeg",
+                    ".png",
+                    ".gif",
+                    ".bmp",
+                    ".tiff",
+                    ".svg",
+                    ".webp",
+                    ".ai",
+                ],
                 "patterns": ["image", "photo", "picture", "screenshot", "screenshot"],
-                "description": "Images and graphics"
+                "description": "Images and graphics",
             },
             "videos": {
                 "extensions": [".mp4", ".avi", ".mov", ".wmv", ".flv", ".mkv", ".webm"],
                 "patterns": ["video", "movie", "recording", "screen", "demo"],
-                "description": "Video files and recordings"
+                "description": "Video files and recordings",
             },
             "audio": {
                 "extensions": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a"],
                 "patterns": ["audio", "music", "sound", "podcast", "recording"],
-                "description": "Audio files and music"
+                "description": "Audio files and music",
             },
             "3d-printing": {
                 "extensions": [".stl", ".gcode", ".obj", ".3mf", ".amf", ".ply"],
                 "patterns": ["3d", "print", "model", "stl", "gcode", "slicer"],
-                "description": "3D printing files and models"
+                "description": "3D printing files and models",
             },
             "installers": {
                 "extensions": [".exe", ".msi", ".dmg", ".pkg", ".deb", ".rpm", ""],
                 "patterns": ["setup", "install", "installer", "setup", "uninstall"],
-                "description": "Software installers and setup files"
+                "description": "Software installers and setup files",
             },
             "executables": {
                 "extensions": [".exe", ".app", ".bat", ".sh", ".py", ".jar"],
                 "patterns": ["program", "app", "tool", "utility", "script"],
-                "description": "Executable programs and scripts"
+                "description": "Executable programs and scripts",
             },
             "archives": {
                 "extensions": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".iso"],
                 "patterns": ["archive", "backup", "compressed", "packed"],
-                "description": "Compressed archives and backups"
+                "description": "Compressed archives and backups",
             },
             "code": {
-                "extensions": [".py", ".js", ".html", ".css", ".java", ".cpp", ".c", ".php", ".rb", ".go", ".ts", ".tsx", ".jsx", ".java", ".cpp", ".c", ".php", ".rb", ".go"],
+                "extensions": [
+                    ".py",
+                    ".js",
+                    ".html",
+                    ".css",
+                    ".java",
+                    ".cpp",
+                    ".c",
+                    ".php",
+                    ".rb",
+                    ".go",
+                    ".ts",
+                    ".tsx",
+                    ".jsx",
+                    ".java",
+                    ".cpp",
+                    ".c",
+                    ".php",
+                    ".rb",
+                    ".go",
+                ],
                 "patterns": ["code", "script", "program", "source", "dev"],
-                "description": "Source code and development files"
+                "description": "Source code and development files",
             },
             "data": {
-                "extensions": [".json", ".xml", ".yaml", ".yml", ".sql", ".db", ".sqlite", ".csv", ".xls", ".xlsx", ".ods"],
+                "extensions": [
+                    ".json",
+                    ".xml",
+                    ".yaml",
+                    ".yml",
+                    ".sql",
+                    ".db",
+                    ".sqlite",
+                    ".csv",
+                    ".xls",
+                    ".xlsx",
+                    ".ods",
+                ],
                 "patterns": ["data", "config", "settings", "database"],
-                "description": "Data files and configurations"
+                "description": "Data files and configurations",
             },
             "other": {
                 "extensions": [],
                 "patterns": [],
-                "description": "Miscellaneous files"
-            }
+                "description": "Miscellaneous files",
+            },
         }
 
         # Initialize mimetypes
@@ -128,14 +340,46 @@ class SmartCategorizer:
 
         # Check if this folder name suggests it's already organized
         organized_folder_indicators = [
-            "3d", "3d-printing", "stl", "gcode", "models", "prints",
-            "images", "photos", "pictures", "screenshots", "wallpapers",
-            "documents", "docs", "pdfs", "files", "papers", "research",
-            "installers", "setup", "software", "programs", "apps",
-            "code", "scripts", "programming", "development", "src",
-            "videos", "movies", "clips", "recordings",
-            "audio", "music", "sounds", "podcasts",
-            "archives", "backups", "old", "temp", "temporary"
+            "3d",
+            "3d-printing",
+            "stl",
+            "gcode",
+            "models",
+            "prints",
+            "images",
+            "photos",
+            "pictures",
+            "screenshots",
+            "wallpapers",
+            "documents",
+            "docs",
+            "pdfs",
+            "files",
+            "papers",
+            "research",
+            "installers",
+            "setup",
+            "software",
+            "programs",
+            "apps",
+            "code",
+            "scripts",
+            "programming",
+            "development",
+            "src",
+            "videos",
+            "movies",
+            "clips",
+            "recordings",
+            "audio",
+            "music",
+            "sounds",
+            "podcasts",
+            "archives",
+            "backups",
+            "old",
+            "temp",
+            "temporary",
         ]
 
         # If the folder name suggests it's already organized, don't move files from it
@@ -147,7 +391,11 @@ class SmartCategorizer:
         try:
             folder_path = os.path.join(base_path, path_parts[0])
             if os.path.isdir(folder_path):
-                files_in_folder = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+                files_in_folder = [
+                    f
+                    for f in os.listdir(folder_path)
+                    if os.path.isfile(os.path.join(folder_path, f))
+                ]
                 if len(files_in_folder) >= 3:  # Only check folders with 3+ files
                     extensions = [Path(f).suffix.lower() for f in files_in_folder]
                     # If 80% of files have the same extension, consider it organized
@@ -187,15 +435,43 @@ class SmartCategorizer:
         # Also check for files without extensions that might be exempt
         filename = file_path_obj.name.lower()
         exempt_filenames = {
-            "makefile", "dockerfile", "docker-compose.yml", "docker-compose.yaml",
-            "readme", "readme.md", "readme.txt", "readme.rst", "readme.rst",
-            "changelog", "changelog.md", "changelog.txt", "changelog.rst",
-            "license", "license.md", "license.txt", "license.rst",
-            "contributing", "contributing.md", "contributing.txt", "contributing.rst",
-            "authors", "authors.md", "authors.txt", "authors.rst",
-            "news", "news.md", "news.txt", "news.rst",
-            "todo", "todo.md", "todo.txt", "todo.rst",
-            "version", "version.md", "version.txt", "version.rst"
+            "makefile",
+            "dockerfile",
+            "docker-compose.yml",
+            "docker-compose.yaml",
+            "readme",
+            "readme.md",
+            "readme.txt",
+            "readme.rst",
+            "readme.rst",
+            "changelog",
+            "changelog.md",
+            "changelog.txt",
+            "changelog.rst",
+            "license",
+            "license.md",
+            "license.txt",
+            "license.rst",
+            "contributing",
+            "contributing.md",
+            "contributing.txt",
+            "contributing.rst",
+            "authors",
+            "authors.md",
+            "authors.txt",
+            "authors.rst",
+            "news",
+            "news.md",
+            "news.txt",
+            "news.rst",
+            "todo",
+            "todo.md",
+            "todo.txt",
+            "todo.rst",
+            "version",
+            "version.md",
+            "version.txt",
+            "version.rst",
         }
 
         if filename in exempt_filenames:
@@ -203,7 +479,9 @@ class SmartCategorizer:
 
         return False
 
-    def categorize_file(self, file_path: str, file_name: str, base_path: str = "") -> Tuple[str, str, str]:
+    def categorize_file(
+        self, file_path: str, file_name: str, base_path: str = ""
+    ) -> Tuple[str, str, str]:
         """
         Categorize a file based on extension and filename patterns.
         Returns: (category, subcategory, description)
@@ -214,7 +492,11 @@ class SmartCategorizer:
 
         # First, check if file is locationally exempt (should stay where it is)
         if self._is_locationally_exempt(file_path):
-            return "exempt", "locationally-exempt", "File is locationally exempt and should stay in place"
+            return (
+                "exempt",
+                "locationally-exempt",
+                "File is locationally exempt and should stay in place",
+            )
 
         # Check if file is in an existing folder structure
         if base_path and self._is_existing_folder(file_path, base_path):
@@ -222,7 +504,11 @@ class SmartCategorizer:
 
             # Use folder context to influence categorization
             if folder_context in ["3d", "3d-printing", "stl", "gcode", "models"]:
-                return "3d-printing", "existing-folder", "3D printing files in existing folder"
+                return (
+                    "3d-printing",
+                    "existing-folder",
+                    "3D printing files in existing folder",
+                )
             elif folder_context in ["images", "photos", "pictures", "screenshots"]:
                 return "images", "existing-folder", "Images in existing folder"
             elif folder_context in ["documents", "docs", "pdfs", "files"]:
@@ -233,7 +519,11 @@ class SmartCategorizer:
                 return "code", "existing-folder", "Code files in existing folder"
             else:
                 # Generic existing folder
-                return "other", "existing-folder", f"Files in existing {folder_context} folder"
+                return (
+                    "other",
+                    "existing-folder",
+                    f"Files in existing {folder_context} folder",
+                )
 
         # Original categorization logic for root-level files
         # First, try to match by extension
@@ -253,14 +543,30 @@ class SmartCategorizer:
         # Try to guess by mimetype
         mime_type, _ = mimetypes.guess_type(file_path)
         if mime_type:
-            if mime_type.startswith('image/'):
-                return "images", self._get_subcategory(name_lower, "images"), "Images and graphics"
-            elif mime_type.startswith('video/'):
-                return "videos", self._get_subcategory(name_lower, "videos"), "Video files and recordings"
-            elif mime_type.startswith('audio/'):
-                return "audio", self._get_subcategory(name_lower, "audio"), "Audio files and music"
-            elif mime_type.startswith('text/'):
-                return "documents", self._get_subcategory(name_lower, "documents"), "Text documents"
+            if mime_type.startswith("image/"):
+                return (
+                    "images",
+                    self._get_subcategory(name_lower, "images"),
+                    "Images and graphics",
+                )
+            elif mime_type.startswith("video/"):
+                return (
+                    "videos",
+                    self._get_subcategory(name_lower, "videos"),
+                    "Video files and recordings",
+                )
+            elif mime_type.startswith("audio/"):
+                return (
+                    "audio",
+                    self._get_subcategory(name_lower, "audio"),
+                    "Audio files and music",
+                )
+            elif mime_type.startswith("text/"):
+                return (
+                    "documents",
+                    self._get_subcategory(name_lower, "documents"),
+                    "Text documents",
+                )
 
         # Default to "other"
         return "other", "misc", "Miscellaneous files"
@@ -316,7 +622,9 @@ class SmartCategorizer:
         else:
             return "general"
 
-    def create_organized_structure(self, files: List[Dict], base_path: str = "") -> Dict[str, List[Dict]]:
+    def create_organized_structure(
+        self, files: List[Dict], base_path: str = ""
+    ) -> Dict[str, List[Dict]]:
         """
         Create an organized structure based on file categorization.
         """
@@ -324,9 +632,7 @@ class SmartCategorizer:
 
         for file_info in files:
             category, subcategory, description = self.categorize_file(
-                file_info["file_path"],
-                file_info["file_name"],
-                base_path
+                file_info["file_path"], file_info["file_name"], base_path
             )
 
             # Create category key
@@ -338,16 +644,20 @@ class SmartCategorizer:
                 organized[category][subcategory] = []
 
             # Add file to appropriate subcategory
-            organized[category][subcategory].append({
-                **file_info,
-                "category": category,
-                "subcategory": subcategory,
-                "description": description
-            })
+            organized[category][subcategory].append(
+                {
+                    **file_info,
+                    "category": category,
+                    "subcategory": subcategory,
+                    "description": description,
+                }
+            )
 
         return organized
 
-    def generate_move_plan(self, organized_files: Dict[str, List[Dict]], base_path: str) -> List[Dict]:
+    def generate_move_plan(
+        self, organized_files: Dict[str, List[Dict]], base_path: str
+    ) -> List[Dict]:
         """
         Generate a plan for moving files to their organized locations.
         """
@@ -360,33 +670,41 @@ class SmartCategorizer:
                     if subcategory in ["locationally-exempt", "existing-folder"]:
                         # Don't move files that are exempt or already in organized folders
                         # Just keep them where they are
-                        move_plan.append({
-                            "src_path": file_info["file_path"],
-                            "dst_path": file_info["file_path"],  # Keep same path
-                            "category": category,
-                            "subcategory": subcategory,
-                            "description": file_info["description"],
-                            "skip_move": True  # Flag to indicate no actual move needed
-                        })
+                        move_plan.append(
+                            {
+                                "src_path": file_info["file_path"],
+                                "dst_path": file_info["file_path"],  # Keep same path
+                                "category": category,
+                                "subcategory": subcategory,
+                                "description": file_info["description"],
+                                "skip_move": True,  # Flag to indicate no actual move needed
+                            }
+                        )
                     else:
                         # Create destination path for root-level files
                         if subcategory == "general":
                             dst_path = f"{category}/{file_info['file_name']}"
                         else:
-                            dst_path = f"{category}/{subcategory}/{file_info['file_name']}"
+                            dst_path = (
+                                f"{category}/{subcategory}/{file_info['file_name']}"
+                            )
 
-                        move_plan.append({
-                            "src_path": file_info["file_path"],
-                            "dst_path": dst_path,
-                            "category": category,
-                            "subcategory": subcategory,
-                            "description": file_info["description"],
-                            "skip_move": False
-                        })
+                        move_plan.append(
+                            {
+                                "src_path": file_info["file_path"],
+                                "dst_path": dst_path,
+                                "category": category,
+                                "subcategory": subcategory,
+                                "description": file_info["description"],
+                                "skip_move": False,
+                            }
+                        )
 
         return move_plan
 
-    def get_category_stats(self, organized_files: Dict[str, List[Dict]]) -> Dict[str, int]:
+    def get_category_stats(
+        self, organized_files: Dict[str, List[Dict]]
+    ) -> Dict[str, int]:
         """
         Get statistics about file distribution across categories.
         """

@@ -1,3 +1,24 @@
+"""
+Enhanced File Loader for LlamaFS
+
+This module provides an enhanced file loading and organization system that combines
+smart categorization with optional LLM content analysis. It's designed to be fast
+and efficient while providing intelligent file organization.
+
+Key Features:
+- Smart categorization using file extensions and patterns
+- Optional LLM content analysis for enhanced organization
+- Concurrent processing with configurable limits
+- Safety limits to prevent system overload
+- Progress tracking and error handling
+- Support for both text and image analysis
+
+The system first applies fast rule-based categorization, then optionally enhances
+specific file types (documents, images) with LLM content analysis for better
+organization.
+
+"""
+
 import asyncio
 import json
 import os
@@ -26,6 +47,10 @@ from src.smart_categorizer import SmartCategorizer
 class EnhancedFileLoader:
     """
     Enhanced file loader that uses smart categorization for efficient organization.
+
+    This class combines the speed of rule-based categorization with the intelligence
+    of LLM content analysis. It processes files in batches with concurrency limits
+    to prevent system overload while providing comprehensive file organization.
     """
 
     def __init__(self, max_concurrent_tasks: int = 5):
@@ -61,7 +86,7 @@ class EnhancedFileLoader:
             "statistics": stats,
             "total_files": len(file_list),
             "files_processed": len(file_list),
-            "files_skipped": getattr(self, '_files_skipped', 0)
+            "files_skipped": getattr(self, "_files_skipped", 0),
         }
 
     def _load_file_list(self, path: str) -> List[Dict]:
@@ -82,7 +107,9 @@ class EnhancedFileLoader:
                 # Check if this file would be processed (not exempt or in existing folder)
                 if self._should_process_file(file_path, path):
                     if files_processed >= max_files:
-                        print(f"⚠️  Reached processable file limit ({max_files}). Stopping file discovery.")
+                        print(
+                            f"⚠️  Reached processable file limit ({max_files}). Stopping file discovery."
+                        )
                         break
 
                     file_info = {
@@ -92,7 +119,7 @@ class EnhancedFileLoader:
                         "size": os.path.getsize(file_path),
                         "extension": Path(file).suffix.lower(),
                         "category": None,
-                        "subcategory": None
+                        "subcategory": None,
                     }
 
                     file_list.append(file_info)
@@ -104,7 +131,9 @@ class EnhancedFileLoader:
                 break
 
         if files_processed >= max_files:
-            print(f"⚠️  Limited to {max_files} processable files to prevent system overload.")
+            print(
+                f"⚠️  Limited to {max_files} processable files to prevent system overload."
+            )
 
         if files_skipped > 0:
             print(f"ℹ️  Skipped {files_skipped} files (exempt or in existing folders).")
@@ -128,7 +157,9 @@ class EnhancedFileLoader:
 
         return True
 
-    async def _enhance_with_llm_analysis(self, move_plan: List[Dict], base_path: str) -> List[Dict]:
+    async def _enhance_with_llm_analysis(
+        self, move_plan: List[Dict], base_path: str
+    ) -> List[Dict]:
         """
         Enhance the move plan with LLM content analysis for specific categories.
         """
@@ -147,7 +178,9 @@ class EnhancedFileLoader:
         # Safety check: limit the number of files to analyze to prevent system overload
         max_files_to_analyze = 1000  # Reasonable limit
         if len(files_to_analyze) > max_files_to_analyze:
-            print(f"⚠️  Too many files to analyze ({len(files_to_analyze)}). Limiting to {max_files_to_analyze} files.")
+            print(
+                f"⚠️  Too many files to analyze ({len(files_to_analyze)}). Limiting to {max_files_to_analyze} files."
+            )
             files_to_analyze = files_to_analyze[:max_files_to_analyze]
 
         print(f"🔍 Analyzing {len(files_to_analyze)} files with LLM...")
@@ -178,15 +211,21 @@ class EnhancedFileLoader:
         results = []
 
         for i in range(0, len(files_to_analyze), batch_size):
-            batch = files_to_analyze[i:i + batch_size]
-            print(f"📦 Processing batch {i//batch_size + 1}/{(len(files_to_analyze) + batch_size - 1)//batch_size} ({len(batch)} files)")
+            batch = files_to_analyze[i : i + batch_size]
+            print(
+                f"📦 Processing batch {i//batch_size + 1}/{(len(files_to_analyze) + batch_size - 1)//batch_size} ({len(batch)} files)"
+            )
 
             # Create tasks for this batch
             tasks = [analyze_file(file_info) for file_info in batch]
 
             # Process batch with progress tracking
             batch_results = []
-            for task in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc=f"Batch {i//batch_size + 1}"):
+            for task in tqdm(
+                asyncio.as_completed(tasks),
+                total=len(tasks),
+                desc=f"Batch {i//batch_size + 1}",
+            ):
                 result, error = await task
                 batch_results.append(result)
                 if error:
@@ -219,7 +258,16 @@ class EnhancedFileLoader:
             # Determine file type and use appropriate analysis
             extension = Path(file_path).suffix.lower()
 
-            if extension in [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".svg", ".webp"]:
+            if extension in [
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".gif",
+                ".bmp",
+                ".tiff",
+                ".svg",
+                ".webp",
+            ]:
                 return await self._analyze_image(file_path)
             elif extension in [".pdf", ".doc", ".docx", ".txt", ".md"]:
                 return await self._analyze_text_document(file_path)
@@ -242,15 +290,17 @@ class EnhancedFileLoader:
             temp_path = None
             try:
                 with Image.open(file_path) as img:
-                    if img.mode == 'P' and 'transparency' in img.info:
-                        img = img.convert('RGBA')
+                    if img.mode == "P" and "transparency" in img.info:
+                        img = img.convert("RGBA")
                         # Save the converted image temporarily
-                        temp_path = file_path + '.temp_rgba.png'
+                        temp_path = file_path + ".temp_rgba.png"
                         img.save(temp_path)
                         file_path = temp_path
             except Exception as img_error:
                 # If image conversion fails, continue with original file
-                print(f"⚠️  Image conversion warning for {os.path.basename(file_path)}: {img_error}")
+                print(
+                    f"⚠️  Image conversion warning for {os.path.basename(file_path)}: {img_error}"
+                )
 
             client = ollama.AsyncClient()
             response = await client.chat(
@@ -269,13 +319,16 @@ class EnhancedFileLoader:
             if temp_path:
                 try:
                     import os
+
                     os.remove(temp_path)
                 except:
                     pass
 
             return response["message"]["content"]
         except Exception as e:
-            error_msg = f"Image analysis failed for {os.path.basename(file_path)}: {str(e)}"
+            error_msg = (
+                f"Image analysis failed for {os.path.basename(file_path)}: {str(e)}"
+            )
             print(f"❌ {error_msg}")
             return f"Image analysis failed: {str(e)}"
 
@@ -299,19 +352,18 @@ class EnhancedFileLoader:
                 messages=[
                     {
                         "role": "system",
-                        "content": "Provide a brief 1-2 sentence summary of this document for file organization purposes."
+                        "content": "Provide a brief 1-2 sentence summary of this document for file organization purposes.",
                     },
-                    {
-                        "role": "user",
-                        "content": f"Document content: {text}"
-                    },
+                    {"role": "user", "content": f"Document content: {text}"},
                 ],
                 model="llama3.1:8b",
                 options={"num_predict": 64},
             )
             return response["message"]["content"]
         except Exception as e:
-            error_msg = f"Text analysis failed for {os.path.basename(file_path)}: {str(e)}"
+            error_msg = (
+                f"Text analysis failed for {os.path.basename(file_path)}: {str(e)}"
+            )
             print(f"❌ {error_msg}")
             return f"Text analysis failed: {str(e)}"
 
@@ -324,11 +376,18 @@ class EnhancedFileLoader:
 
         # Add content-based subcategories
         if file_info["category"] == "documents":
-            if any(word in summary for word in ["manual", "guide", "tutorial", "instructions"]):
+            if any(
+                word in summary
+                for word in ["manual", "guide", "tutorial", "instructions"]
+            ):
                 return original_dst.replace("/general/", "/manuals/")
-            elif any(word in summary for word in ["report", "analysis", "study", "research"]):
+            elif any(
+                word in summary for word in ["report", "analysis", "study", "research"]
+            ):
                 return original_dst.replace("/general/", "/reports/")
-            elif any(word in summary for word in ["contract", "agreement", "legal", "terms"]):
+            elif any(
+                word in summary for word in ["contract", "agreement", "legal", "terms"]
+            ):
                 return original_dst.replace("/general/", "/legal/")
 
         elif file_info["category"] == "images":
@@ -353,7 +412,7 @@ class EnhancedFileLoader:
         return {
             "total_files": len(file_list),
             "categories": stats,
-            "file_types": self._get_file_type_breakdown(file_list)
+            "file_types": self._get_file_type_breakdown(file_list),
         }
 
     def _get_file_type_breakdown(self, file_list: List[Dict]) -> Dict[str, int]:
