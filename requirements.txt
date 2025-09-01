@@ -2,7 +2,6 @@ ollama
 chromadb
 llama-index
 litellm
-groq
 docx2txt
 colorama
 termcolor

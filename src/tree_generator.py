@@ -1,4 +1,4 @@
-from groq import Groq
+import ollama
 import json
 import os
 
@@ -28,16 +28,16 @@ Your response must be a JSON object with the following schema:
 
 
 def create_file_tree(summaries: list, session):
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-    chat_completion = client.chat.completions.create(
+    client = ollama.Client()
+    chat_completion = client.chat(
         messages=[
             {"role": "system", "content": FILE_PROMPT},
             {"role": "user", "content": json.dumps(summaries)},
         ],
-        model="llama-3.1-70b-versatile",
-        response_format={"type": "json_object"},  # Uncomment if needed
-        temperature=0,
+        model="llama3.1:8b",
+        format="json",
+        options={"temperature": 0},
     )
 
-    file_tree = json.loads(chat_completion.choices[0].message.content)["files"]
+    file_tree = json.loads(chat_completion["message"]["content"])["files"]
     return file_tree

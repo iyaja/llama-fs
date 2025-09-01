@@ -3,7 +3,7 @@ import json
 import os
 import time
 
-from groq import Groq
+import ollama
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
@@ -108,16 +108,16 @@ Here are a few examples of good file naming conventions to emulate, based on the
 Include the above items in your response exactly as is, along all other proposed changes.
 """.strip()
 
-    client = Groq()
-    cmpl = client.chat.completions.create(
+    client = ollama.Client()
+    cmpl = client.chat(
         messages=[
             {"content": FILE_PROMPT, "role": "system"},
             {"content": json.dumps(summaries), "role": "user"},
             {"content": WATCH_PROMPT, "role": "system"},
             {"content": json.dumps(fs_events), "role": "user"},
         ],
-        model="llama-3.1-70b-versatile",
-        response_format={"type": "json_object"},
-        temperature=0,
+        model="llama3.1:8b",
+        format="json",
+        options={"temperature": 0},
     )
-    return json.loads(cmpl.choices[0].message.content)["files"]
+    return json.loads(cmpl["message"]["content"])["files"]

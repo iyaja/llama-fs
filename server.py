@@ -17,7 +17,6 @@ from asciitree.drawing import BOX_LIGHT, BoxStyle
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from groq import Groq
 from llama_index.core import SimpleDirectoryReader
 from pydantic import BaseModel
 from termcolor import colored

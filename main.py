@@ -2,7 +2,6 @@ import os
 import json
 import argparse
 import pathlib
-from groq import Groq
 from llama_index.core import SimpleDirectoryReader
 import colorama
 import pathlib
