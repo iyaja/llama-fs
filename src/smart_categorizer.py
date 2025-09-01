@@ -112,13 +112,54 @@ class SmartCategorizer:
 
     def _is_existing_folder(self, file_path: str, base_path: str) -> bool:
         """
-        Check if a file is inside an existing folder structure (not in root).
+        Check if a file is inside an already organized folder structure.
+        Only considers folders as "organized" if they contain files that suggest
+        they're already properly categorized (e.g., all STL files in a folder).
         """
         rel_path = os.path.relpath(file_path, base_path)
         path_parts = rel_path.split(os.sep)
 
         # If there are multiple path parts, it's in a subdirectory
-        return len(path_parts) > 1
+        if len(path_parts) <= 1:
+            return False
+
+        # Get the parent folder name
+        folder_name = path_parts[0].lower()
+
+        # Check if this folder name suggests it's already organized
+        organized_folder_indicators = [
+            "3d", "3d-printing", "stl", "gcode", "models", "prints",
+            "images", "photos", "pictures", "screenshots", "wallpapers",
+            "documents", "docs", "pdfs", "files", "papers", "research",
+            "installers", "setup", "software", "programs", "apps",
+            "code", "scripts", "programming", "development", "src",
+            "videos", "movies", "clips", "recordings",
+            "audio", "music", "sounds", "podcasts",
+            "archives", "backups", "old", "temp", "temporary"
+        ]
+
+        # If the folder name suggests it's already organized, don't move files from it
+        if folder_name in organized_folder_indicators:
+            return True
+
+        # Additional check: if the folder contains mostly files of the same type,
+        # it might already be organized
+        try:
+            folder_path = os.path.join(base_path, path_parts[0])
+            if os.path.isdir(folder_path):
+                files_in_folder = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+                if len(files_in_folder) >= 3:  # Only check folders with 3+ files
+                    extensions = [Path(f).suffix.lower() for f in files_in_folder]
+                    # If 80% of files have the same extension, consider it organized
+                    if extensions:
+                        most_common_ext = max(set(extensions), key=extensions.count)
+                        if extensions.count(most_common_ext) / len(extensions) >= 0.8:
+                            return True
+        except (OSError, PermissionError):
+            # If we can't read the folder, assume it's not organized
+            pass
+
+        return False
 
     def _get_folder_context(self, file_path: str, base_path: str) -> str:
         """

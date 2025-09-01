@@ -239,7 +239,8 @@ async def smart_batch(request: Request):
             status_code=400, detail="Path does not exist in filesystem")
 
     # Use enhanced loader for efficient categorization
-    enhanced_loader = EnhancedFileLoader()
+    # Use conservative settings to prevent system overload
+    enhanced_loader = EnhancedFileLoader(max_concurrent_tasks=3)
     result = await enhanced_loader.get_organized_files(path, use_llm_for_content=True)
 
     # Create tree structure for visualization
@@ -276,7 +277,8 @@ async def smart_batch_execute(request: Request):
         print(f"🔍 Starting smart batch execution for: {path}")
 
         # Use enhanced loader for efficient categorization (without LLM by default)
-        enhanced_loader = EnhancedFileLoader()
+        # Use conservative settings to prevent system overload
+        enhanced_loader = EnhancedFileLoader(max_concurrent_tasks=3)
         result = await enhanced_loader.get_organized_files(path, use_llm_for_content=False)
 
         print(f"✅ Generated organization plan with {len(result['move_plan'])} files")

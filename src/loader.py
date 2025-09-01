@@ -187,23 +187,51 @@ async def dispatch_summarize_document(doc, client):
         raise ValueError("Document type not supported")
 
 
-async def get_summaries(documents):
+async def get_summaries(documents, max_concurrent: int = 5):
     client = ollama.AsyncClient()
+
+    # Safety check: limit the number of documents to prevent system overload
+    max_documents = 2000  # Reasonable limit
+    if len(documents) > max_documents:
+        print(f"⚠️  Too many documents to process ({len(documents)}). Limiting to {max_documents} documents.")
+        documents = documents[:max_documents]
+
     print(f"📄 Processing {len(documents)} documents...")
 
-    # Create tasks with progress tracking
-    tasks = [dispatch_summarize_document(doc, client) for doc in documents]
+    # Create semaphore to limit concurrent operations
+    semaphore = asyncio.Semaphore(max_concurrent)
 
-    # Use tqdm for progress tracking
+    async def process_document(doc):
+        async with semaphore:
+            return await dispatch_summarize_document(doc, client)
+
+    # Process documents in batches to avoid overwhelming the system
+    batch_size = min(50, len(documents))
     summaries = []
-    for task in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Summarizing documents"):
-        try:
-            result = await task
-            summaries.append(result)
-        except Exception as e:
-            print(f"❌ Error processing document: {e}")
-            # Add a placeholder for failed documents
-            summaries.append({"error": str(e)})
+
+    for i in range(0, len(documents), batch_size):
+        batch = documents[i:i + batch_size]
+        print(f"📦 Processing document batch {i//batch_size + 1}/{(len(documents) + batch_size - 1)//batch_size} ({len(batch)} documents)")
+
+        # Create tasks for this batch
+        tasks = [process_document(doc) for doc in batch]
+
+        # Process batch with progress tracking
+        batch_results = []
+        for task in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc=f"Batch {i//batch_size + 1}"):
+            try:
+                result = await task
+                batch_results.append(result)
+            except Exception as e:
+                print(f"❌ Error processing document: {e}")
+                # Add a placeholder for failed documents
+                batch_results.append({"error": str(e)})
+
+        summaries.extend(batch_results)
+
+        # Small delay between batches
+        if i + batch_size < len(documents):
+            await asyncio.sleep(0.1)
 
     return summaries
 

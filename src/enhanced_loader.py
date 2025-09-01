@@ -28,8 +28,10 @@ class EnhancedFileLoader:
     Enhanced file loader that uses smart categorization for efficient organization.
     """
 
-    def __init__(self):
+    def __init__(self, max_concurrent_tasks: int = 5):
         self.categorizer = SmartCategorizer()
+        self.max_concurrent_tasks = max_concurrent_tasks
+        self.semaphore = asyncio.Semaphore(max_concurrent_tasks)
 
     async def get_organized_files(self, path: str, use_llm_for_content: bool = True):
         """
@@ -57,33 +59,74 @@ class EnhancedFileLoader:
             "organized_structure": organized_files,
             "move_plan": enhanced_plan,
             "statistics": stats,
-            "total_files": len(file_list)
+            "total_files": len(file_list),
+            "files_processed": len(file_list),
+            "files_skipped": getattr(self, '_files_skipped', 0)
         }
 
     def _load_file_list(self, path: str) -> List[Dict]:
         """
         Load basic file information without content analysis.
+        Only counts files that will actually be processed (not exempt or in existing folders).
         """
         file_list = []
+        max_files = 5000  # Safety limit to prevent system overload
+        files_processed = 0
+        files_skipped = 0
 
         for root, dirs, files in os.walk(path):
             for file in files:
                 file_path = os.path.join(root, file)
                 rel_path = os.path.relpath(file_path, path)
 
-                file_info = {
-                    "file_path": rel_path,
-                    "file_name": file,
-                    "full_path": file_path,
-                    "size": os.path.getsize(file_path),
-                    "extension": Path(file).suffix.lower(),
-                    "category": None,
-                    "subcategory": None
-                }
+                # Check if this file would be processed (not exempt or in existing folder)
+                if self._should_process_file(file_path, path):
+                    if files_processed >= max_files:
+                        print(f"⚠️  Reached processable file limit ({max_files}). Stopping file discovery.")
+                        break
 
-                file_list.append(file_info)
+                    file_info = {
+                        "file_path": rel_path,
+                        "file_name": file,
+                        "full_path": file_path,
+                        "size": os.path.getsize(file_path),
+                        "extension": Path(file).suffix.lower(),
+                        "category": None,
+                        "subcategory": None
+                    }
+
+                    file_list.append(file_info)
+                    files_processed += 1
+                else:
+                    files_skipped += 1
+
+            if files_processed >= max_files:
+                break
+
+        if files_processed >= max_files:
+            print(f"⚠️  Limited to {max_files} processable files to prevent system overload.")
+
+        if files_skipped > 0:
+            print(f"ℹ️  Skipped {files_skipped} files (exempt or in existing folders).")
+
+        # Store skipped count for statistics
+        self._files_skipped = files_skipped
 
         return file_list
+
+    def _should_process_file(self, file_path: str, base_path: str) -> bool:
+        """
+        Check if a file should be processed (not exempt or in existing folder).
+        """
+        # Check if file is locationally exempt
+        if self.categorizer._is_locationally_exempt(file_path):
+            return False
+
+        # Check if file is in an existing organized folder
+        if self.categorizer._is_existing_folder(file_path, base_path):
+            return False
+
+        return True
 
     async def _enhance_with_llm_analysis(self, move_plan: List[Dict], base_path: str) -> List[Dict]:
         """
@@ -101,37 +144,59 @@ class EnhancedFileLoader:
             print("No files require LLM content analysis.")
             return move_plan
 
+        # Safety check: limit the number of files to analyze to prevent system overload
+        max_files_to_analyze = 1000  # Reasonable limit
+        if len(files_to_analyze) > max_files_to_analyze:
+            print(f"⚠️  Too many files to analyze ({len(files_to_analyze)}). Limiting to {max_files_to_analyze} files.")
+            files_to_analyze = files_to_analyze[:max_files_to_analyze]
+
         print(f"🔍 Analyzing {len(files_to_analyze)} files with LLM...")
 
-        # Process files with progress bar
+        # Process files with progress bar and concurrency limits
         async def analyze_file(file_info):
-            full_path = os.path.join(base_path, file_info["src_path"])
-            file_name = os.path.basename(file_info["src_path"])
+            async with self.semaphore:  # Limit concurrent operations
+                full_path = os.path.join(base_path, file_info["src_path"])
+                file_name = os.path.basename(file_info["src_path"])
 
-            try:
-                summary = await self._get_file_summary(full_path)
-                file_info["content_summary"] = summary
+                try:
+                    summary = await self._get_file_summary(full_path)
+                    file_info["content_summary"] = summary
 
-                # Enhance destination path based on content
-                enhanced_dst = self._enhance_destination_path(file_info)
-                file_info["dst_path"] = enhanced_dst
+                    # Enhance destination path based on content
+                    enhanced_dst = self._enhance_destination_path(file_info)
+                    file_info["dst_path"] = enhanced_dst
 
-                return file_info, None
-            except Exception as e:
-                error_msg = f"Could not analyze {file_name}: {str(e)}"
-                print(f"❌ {error_msg}")
-                file_info["content_summary"] = "Analysis failed"
-                return file_info, error_msg
+                    return file_info, None
+                except Exception as e:
+                    error_msg = f"Could not analyze {file_name}: {str(e)}"
+                    print(f"❌ {error_msg}")
+                    file_info["content_summary"] = "Analysis failed"
+                    return file_info, error_msg
 
-        # Use tqdm for progress tracking
-        tasks = [analyze_file(file_info) for file_info in files_to_analyze]
+        # Process files in batches to avoid overwhelming the system
+        batch_size = min(50, len(files_to_analyze))  # Process max 50 files at a time
         results = []
 
-        for task in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Analyzing files"):
-            result, error = await task
-            results.append(result)
-            if error:
-                print(f"⚠️  {error}")
+        for i in range(0, len(files_to_analyze), batch_size):
+            batch = files_to_analyze[i:i + batch_size]
+            print(f"📦 Processing batch {i//batch_size + 1}/{(len(files_to_analyze) + batch_size - 1)//batch_size} ({len(batch)} files)")
+
+            # Create tasks for this batch
+            tasks = [analyze_file(file_info) for file_info in batch]
+
+            # Process batch with progress tracking
+            batch_results = []
+            for task in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc=f"Batch {i//batch_size + 1}"):
+                result, error = await task
+                batch_results.append(result)
+                if error:
+                    print(f"⚠️  {error}")
+
+            results.extend(batch_results)
+
+            # Small delay between batches to prevent overwhelming the system
+            if i + batch_size < len(files_to_analyze):
+                await asyncio.sleep(0.1)
 
         # Reconstruct the full plan with enhanced results
         result_dict = {r["src_path"]: r for r in results}
