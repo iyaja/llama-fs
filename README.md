@@ -1,92 +1,206 @@
-# LlamaFS
+# FileFlow
+
+## AI-Powered Intelligent File Organization
 
 <img src="electron-react-app/assets/llama_fs.png" width="30%" />
 
-## Inspiration
+> **Your files organized intelligently. Your way.**
 
-[Watch the explainer video](https://x.com/AlexReibman/status/1789895425828204553)
+FileFlow automatically organizes your files based on their content and conventions. Never waste time manually organizing files again.
 
-Open your `~/Downloads` directory. Or your Desktop. It's probably a mess...
+---
+
+## 🚀 Key Features
+
+- **Smart Organization** - Uses AI to understand file content and suggest optimal organization
+- **Two Operating Modes**:
+  - **Batch Mode** - Process a directory, review suggestions, and apply changes
+  - **Watch Mode** - Continuous daemon that learns from your edits and proactively organizes new files
+- **Privacy First** - Process files locally with Ollama or use fast cloud inference with Groq
+- **Blazingly Fast** - Most operations complete in <500ms with intelligent caching
+- **Multiple File Types** - PDFs, documents, images, audio, and text files
+- **Human-in-the-Loop** - Review and approve every suggestion before applying changes
+
+---
+
+## 🎯 The Problem
+
+Open your `~/Downloads` directory. Or your Desktop. It's probably a mess.
 
 > There are only two hard things in Computer Science: cache invalidation and **naming things**.
 
-## What it does
+FileFlow solves the "naming things" problem by leveraging AI to understand your files and organize them intelligently.
 
-LlamaFS is a self-organizing file manager. It automatically renames and organizes your files based on their content and well-known conventions (e.g., time). It supports many kinds of files, including images (through Moondream) and audio (through Whisper).
+---
 
-LlamaFS runs in two "modes" - as a batch job (batch mode), and an interactive daemon (watch mode).
+## ⚡ How It Works
 
-In batch mode, you can send a directory to LlamaFS, and it will return a suggested file structure and organize your files.
+### Batch Mode
+1. Select a directory
+2. FileFlow analyzes all files and suggests an optimal structure
+3. Review suggestions and apply changes
 
-In watch mode, LlamaFS starts a daemon that watches your directory. It intercepts all filesystem operations and uses your most recent edits to proactively learn how you rename file. For example, if you create a folder for your 2023 tax documents, and start moving 1-3 files in it, LlamaFS will automatically create and move the files for you!
+### Watch Mode
+1. Select a directory to monitor
+2. FileFlow continuously watches for changes
+3. **Learns from your edits** - When you move 1-3 files into a folder, FileFlow automatically organizes the rest
+4. Applies changes with your approval
 
-Uh... Sending all my personal files to an API provider?! No thank you!
+**Example:** Create a folder for "2024 Tax Documents" and move a couple files into it. FileFlow will automatically move the rest of your tax-related files there!
 
-It also has a toggle for "incognito mode," allowing you route every request through Ollama instead of Groq. Since they use the same Llama 3 model, the perform identically.
+---
 
-## How we built it
+## 🔒 Privacy & Performance
 
-We built LlamaFS on a Python backend, leveraging the Llama3 model through Groq for file content summarization and tree structuring. For local processing, we integrated Ollama running the same model to ensure privacy in incognito mode. The frontend is crafted with Electron, providing a sleek, user-friendly interface that allows users to interact with the suggested file structures before finalizing changes.
+- **Incognito Mode** - Route all requests through Ollama for local processing (uses same Llama 3 model as cloud version)
+- **Smart Caching** - Selective index rewriting based on filesystem changes
+- **Fast Inference** - Cloud mode via Groq completes most operations in <500ms
+- **Your Choice** - Toggle between cloud and local processing anytime
 
-- **It's extremely fast!** (by LLM standards)! Most file operations are processed in <500ms in watch mode (benchmarked by [AgentOps](https://agentops.ai/?utm_source=llama-fs)). This is because of our smart caching that selectively rewrites sections of the index based on the minimum necessary filesystem diff. And of course, Groq's super fast inference API. 😉
+---
 
-- **It's immediately useful** - It's very low friction to use and addresses a problem almost everyone has. We started using it ourselves on this project (very Meta).
+## 🛠️ Tech Stack
 
-## What's next for LlamaFS
+- **Backend**: Python 3.10+, FastAPI, Groq API, Ollama
+- **Frontend**: Electron, React 18, TypeScript, Tailwind CSS
+- **AI**: Llama 3.1 70B (via Groq or Ollama)
+- **Performance**: Smart caching, async processing, streaming responses
 
-- Find and remove old/unused files
-- We have some really cool ideas for - filesystem diffs are hard...
-
-## Installation
+## 📋 Quick Start
 
 ### Prerequisites
-
-Before installing, ensure you have the following requirements:
 - Python 3.10 or higher
-- pip (Python package installer)
+- Node.js 18+ (for frontend)
+- Groq API key (free at [console.groq.com](https://console.groq.com/keys))
+- Optional: Ollama for local processing
 
-### Installing
+#### Step 1: Clone the Repository
+```bash
+git clone https://github.com/iyaja/llama-fs.git
+cd llama-fs
+```
 
-To install the project, follow these steps:
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/iyaja/llama-fs.git
-   ```
+#### Step 2: Set Up Environment
+```bash
+# Copy environment template
+cp .env.example .env
 
-2. Navigate to the project directory:
-    ```bash
-    cd llama-fs
-    ```
+# Edit .env and add your Groq API key
+# Get one free at: https://console.groq.com/keys
+```
 
-3. Install requirements
-   ```bash
-   pip install -r requirements.txt
-   ```
+#### Step 3: Install Backend Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-4. Update your `.env`
-Copy `.env.example` into a new file called `.env`. Then, provide the following API keys:
-* Groq: You can obtain one from [here](https://console.groq.com/keys).
-* AgentOps: You can obtain one from [here](https://app.agentops.ai/settings/projects).
+#### Step 4: Install Frontend Dependencies
+```bash
+cd electron-react-app
+npm install
+cd ..
+```
 
-Groq is used for fast cloud inference but can be replaced with Ollama in the code directly (TODO.)
+#### Step 5: (Optional) Set Up Local Processing
+For privacy-first operation, install Ollama and download the Moondream model:
+```bash
+ollama pull moondream
+```
 
-AgentOps is used for logging and monitoring and will report the latency, cost per session, and give you a full session replay of each LlamaFS call.
+---
 
-5. (Optional) Install moondream if you want to use the incognito mode
-    ```bash
-    ollama pull moondream
-    ```
+## 🎮 Usage
 
-## Usage
+### Running the Application
 
-To serve the application locally using FastAPI, run the following command
-   ```bash
-   fastapi dev server.py
-   ```
+**Terminal 1 - Start Backend Server:**
+```bash
+fastapi dev server.py
+# Runs on http://localhost:8000
+```
 
-This will run the server by default on port 8000. The API can be queried using a `curl` command, and passing in the file path as the argument. For example, on the Downloads folder:
-   ```bash
-   curl -X POST http://127.0.0.1:8000/batch \
-    -H "Content-Type: application/json" \
-    -d '{"path": "/Users/<username>/Downloads/", "instruction": "string", "incognito": false}'
-   ```
+**Terminal 2 - Start Frontend:**
+```bash
+cd electron-react-app
+npm start
+# Electron app opens with dev tools
+```
+
+### Batch Mode (Single Directory)
+1. Select a directory path
+2. Click "Process" to analyze files
+3. Review suggested reorganization
+4. Accept/reject individual changes
+5. Click "Confirm" to apply changes
+
+### Watch Mode (Continuous Monitoring)
+1. Select a directory to monitor
+2. Click "Watch" to start monitoring
+3. FileFlow watches for new/changed files
+4. As you manually organize files, FileFlow learns your patterns
+5. Suggestions update in real-time
+
+---
+
+## 🔧 API Reference
+
+### POST /batch
+Process a directory and get file organization suggestions.
+
+```bash
+curl -X POST http://127.0.0.1:8000/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "path": "/path/to/directory",
+    "instruction": "organize my files",
+    "incognito": false
+  }'
+```
+
+**Parameters:**
+- `path` - Directory to process
+- `instruction` - (Optional) Special instructions for organization
+- `incognito` - Use local Ollama (true) or cloud Groq (false)
+
+### POST /watch
+Start watching a directory for changes.
+
+### POST /commit
+Apply accepted file moves.
+
+---
+
+## 🏗️ Architecture
+
+FileFlow consists of:
+- **Backend** (Python/FastAPI) - File analysis, summarization, organization logic
+- **Frontend** (Electron/React) - User interface for batch and watch modes
+- **AI Models** - Llama 3.1 70B via Groq or Ollama
+
+See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed architecture information.
+
+---
+
+## 📚 Documentation
+
+- [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - System design and components
+- [CONFIGURATION.md](./docs/CONFIGURATION.md) - Environment setup and options
+- [API.md](./docs/API.md) - Detailed API documentation
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please feel free to submit issues and pull requests.
+
+---
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+---
+
+## 🙏 Acknowledgments
+
+Built with Llama 3.1 via [Groq](https://groq.com) and [Ollama](https://ollama.ai)

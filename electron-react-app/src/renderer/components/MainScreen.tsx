@@ -177,11 +177,11 @@ function MainScreen() {
   // Add the className 'dark' to main div to enable dark mode
   return (
     <div className="flex h-screen w-full">
-      <div className="bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-4">
+      <div className="bg-gradient-to-b from-blue-600 to-blue-700 dark:from-blue-900 dark:to-blue-950 border-r border-blue-800 p-4 flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <FolderIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
-          <span className="font-medium text-gray-700 dark:text-gray-300">
-            Llama-FS
+          <WandIcon className="h-6 w-6 text-blue-100" />
+          <span className="font-bold text-blue-50 text-lg">
+            FileFlow
           </span>
         </div>
         <nav className="flex flex-col gap-2" >
@@ -234,19 +234,87 @@ function MainScreen() {
                 </div>
               </div>
             ) : preOrderedFiles.length === 0 ? (
-              // Render llamaFsLogo and supported file types when not loading and no files
-              <div className="flex flex-col items-center" style={{ height: '100%' }}>
-                <h1 className="text-lg font-semibold mb-2">Llama-FS</h1>
-                <p>Organize your drive with LLMs. </p>
-                <div className="flex justify-center" style={{ width: '50%' }}>
-                  <img src={llamaFsLogo} alt="Llama FS Logo" style={{ width: '100%' }} />
+              // Render FileFlow landing page with key information
+              <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-8">
+                <div className="max-w-2xl text-center space-y-6">
+                  {/* Logo and Title */}
+                  <div>
+                    <div className="flex justify-center mb-4">
+                      <img src={llamaFsLogo} alt="FileFlow Logo" style={{ width: '120px' }} />
+                    </div>
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-300 bg-clip-text text-transparent mb-2">
+                      FileFlow
+                    </h1>
+                    <p className="text-xl text-gray-600 dark:text-gray-300 font-medium">
+                      AI-Powered Intelligent File Organization
+                    </p>
+                  </div>
+
+                  {/* Value Proposition */}
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                    <p className="text-gray-700 dark:text-gray-200 text-lg">
+                      <span className="font-semibold">Your files organized intelligently.</span> Never waste time manually organizing files again.
+                    </p>
+                  </div>
+
+                  {/* Key Features */}
+                  <div className="grid grid-cols-2 gap-4 text-left">
+                    <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+                      <p className="font-semibold text-blue-900 dark:text-blue-300 mb-1">⚡ Blazingly Fast</p>
+                      <p className="text-sm text-blue-800 dark:text-blue-200">Most operations complete in &lt;500ms</p>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                      <p className="font-semibold text-green-900 dark:text-green-300 mb-1">🔒 Privacy First</p>
+                      <p className="text-sm text-green-800 dark:text-green-200">Local processing option with Ollama</p>
+                    </div>
+                    <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                      <p className="font-semibold text-purple-900 dark:text-purple-300 mb-1">🧠 Learns from You</p>
+                      <p className="text-sm text-purple-800 dark:text-purple-200">Watch mode learns your patterns</p>
+                    </div>
+                    <div className="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                      <p className="font-semibold text-orange-900 dark:text-orange-300 mb-1">✨ Smart Organization</p>
+                      <p className="text-sm text-orange-800 dark:text-orange-200">Understands file content with AI</p>
+                    </div>
+                  </div>
+
+                  {/* How to Use */}
+                  <div className="bg-gray-800 dark:bg-gray-900 rounded-lg p-6 text-left space-y-3 border border-gray-700">
+                    <p className="font-semibold text-white text-lg mb-4">How to Get Started:</p>
+                    <div className="space-y-2 text-gray-100 text-sm">
+                      <p><span className="font-semibold">1. Enter a path:</span> Type a directory path in the input above</p>
+                      <p><span className="font-semibold">2. Process:</span> Click the wand icon for batch mode or telescope for watch mode</p>
+                      <p><span className="font-semibold">3. Review:</span> See AI-suggested organization in the tree</p>
+                      <p><span className="font-semibold">4. Approve:</span> Accept/reject changes and confirm</p>
+                    </div>
+                  </div>
+
+                  {/* Supported File Types */}
+                  <div className="text-left">
+                    <p className="font-semibold text-gray-700 dark:text-gray-300 mb-3">Supported File Types:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {supportedFileTypes.map((type, index) => (
+                        <span key={index} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded text-sm">
+                          {type}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Operating Modes */}
+                  <div className="border-t border-gray-300 dark:border-gray-700 pt-6">
+                    <p className="font-semibold text-gray-700 dark:text-gray-300 mb-3">Two Operating Modes:</p>
+                    <div className="grid grid-cols-2 gap-4 text-left">
+                      <div className="bg-blue-100 dark:bg-blue-900/20 rounded-lg p-4">
+                        <p className="font-semibold text-blue-900 dark:text-blue-300 mb-2">📁 Batch Mode</p>
+                        <p className="text-sm text-blue-800 dark:text-blue-200">Process a directory, review suggestions, apply changes</p>
+                      </div>
+                      <div className="bg-cyan-100 dark:bg-cyan-900/20 rounded-lg p-4">
+                        <p className="font-semibold text-cyan-900 dark:text-cyan-300 mb-2">👁️ Watch Mode</p>
+                        <p className="text-sm text-cyan-800 dark:text-cyan-200">Continuous monitoring that learns from your edits</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-center mt-4">Supported file types:</p>
-                <ul className="list-disc text-center">
-                  {supportedFileTypes.map((type, index) => (
-                    <li key={index}>{type}</li>
-                  ))}
-                </ul>
               </div>
             ) : (
               // Existing file details block
