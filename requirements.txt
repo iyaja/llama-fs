@@ -9,8 +9,9 @@ termcolor
 click
 asciitree
 fastapi
+fastapi[standard]
 weave
-agentops
+agentops==0.3.26
 langchain
 langchain_core
 watchdog
