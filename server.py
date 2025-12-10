@@ -1,5 +1,17 @@
-import json
 import os
+import sys
+
+# Fix Windows console encoding for Unicode support (emojis in agentops logs)
+# Must be set before any logging/subprocesses are initialized
+if sys.platform == "win32":
+    # Set for spawned subprocesses (uvicorn workers)
+    os.environ["PYTHONIOENCODING"] = "utf-8"
+    # Reconfigure current process streams
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+import json
 import pathlib
 import queue
 from collections import defaultdict
