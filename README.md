@@ -39,6 +39,55 @@ We built LlamaFS on a Python backend, leveraging the Llama3 model through Groq f
 
 ## Installation
 
+### NixOS / Nix
+
+> **Note:** The upstream repository has not merged NixOS packaging yet (PR [#79](https://github.com/iyaja/llama-fs/pull/79) pending).
+> Until then, use the fork [`vitorbborges/llama-fs`](https://github.com/vitorbborges/llama-fs), which contains a working flake.
+
+If you use Nix or NixOS, a flake is provided — no manual dependency management needed.
+
+**Run directly (no install):**
+```bash
+nix run github:vitorbborges/llama-fs
+```
+This starts the FastAPI server on `http://127.0.0.1:8000`. Set your API keys in the environment first:
+```bash
+export GROQ_API_KEY=your_key
+export AGENTOPS_API_KEY=your_key
+nix run github:vitorbborges/llama-fs
+```
+
+**Development shell:**
+```bash
+git clone https://github.com/vitorbborges/llama-fs.git && cd llama-fs
+nix develop        # drops into a shell with all Python deps + Ollama
+fastapi dev server.py
+```
+
+**Add to your NixOS / home-manager config:**
+```nix
+# flake.nix
+inputs.llama-fs.url = "github:vitorbborges/llama-fs";
+
+# modules/user/llama-fs.nix (or wherever you manage packages)
+{ inputs, system, ... }: {
+  home.packages = [ inputs.llama-fs.packages.${system}.default ];
+}
+```
+
+**Optional systemd service (NixOS only):**
+```nix
+imports = [ inputs.llama-fs.nixosModules.default ];
+
+services.llama-fs = {
+  enable = true;
+  port = 8000;
+  environmentFile = "/run/secrets/llama-fs-env"; # must export GROQ_API_KEY and AGENTOPS_API_KEY
+};
+```
+
+---
+
 ### Prerequisites
 
 Before installing, ensure you have the following requirements:
