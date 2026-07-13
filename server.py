@@ -6,7 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 import time
-import shutil  # Add this import at the beginning of your file
+import shutil
 
 import agentops
 import colorama
@@ -43,8 +43,8 @@ class Request(BaseModel):
 
 class CommitRequest(BaseModel):
     base_path: str
-    src_path: str  # Relative to base_path
-    dst_path: str  # Relative to base_path
+    src_path: str
+    dst_path: str
 
 
 app = FastAPI()
@@ -57,7 +57,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Or restrict to ['POST', 'GET', etc.]
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -76,10 +76,8 @@ async def batch(request: Request):
             status_code=400, detail="Path does not exist in filesystem")
 
     summaries = await get_dir_summaries(path)
-    # Get file tree
-    files = create_file_tree(summaries, session)
+    files = create_file_tree(summaries, session, instruction=request.instruction)
 
-    # Recursively create dictionary from file paths
     tree = {}
     for file in files:
         parts = Path(file["dst_path"]).parts
@@ -92,9 +90,7 @@ async def batch(request: Request):
     tr = LeftAligned(draw=BoxStyle(gfx=BOX_LIGHT, horiz_len=1))
     print(tr(tree))
 
-    # Prepend base path to dst_path
     for file in files:
-        # file["dst_path"] = os.path.join(path, file["dst_path"])
         file["summary"] = summaries[files.index(file)]["summary"]
 
     agentops.end_session(
@@ -112,19 +108,15 @@ async def watch(request: Request):
     response_queue = queue.Queue()
 
     observer = Observer()
-    event_handler = Handler(path, create_watch_file_tree, response_queue)
+    event_handler = Handler(path, create_watch_file_tree, response_queue, instruction=request.instruction)
     await event_handler.set_summaries()
     observer.schedule(event_handler, path, recursive=True)
     observer.start()
-
-    # background_tasks.add_task(observer.start)
 
     def stream():
         while True:
             response = response_queue.get()
             yield json.dumps(response) + "\n"
-            # yield json.dumps({"status": "watching"}) + "\n"
-            # time.sleep(5)
 
     return StreamingResponse(stream())
 
@@ -146,12 +138,10 @@ async def commit(request: CommitRequest):
             status_code=400, detail="Source path does not exist in filesystem"
         )
 
-    # Ensure the destination directory exists
     dst_directory = os.path.dirname(dst)
     os.makedirs(dst_directory, exist_ok=True)
 
     try:
-        # If src is a file and dst is a directory, move the file into dst with the original filename.
         if os.path.isfile(src) and os.path.isdir(dst):
             shutil.move(src, os.path.join(dst, os.path.basename(src)))
         else:

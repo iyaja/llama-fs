@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import time
+from typing import Optional
 
 from groq import Groq
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
@@ -11,10 +12,11 @@ from src.loader import get_dir_summaries, get_file_summary
 
 
 class Handler(FileSystemEventHandler):
-    def __init__(self, base_path, callback, queue):
+    def __init__(self, base_path, callback, queue, instruction=None):
         self.base_path = base_path
         self.callback = callback
         self.queue = queue
+        self.instruction = instruction
         self.events = []
         print(f"Watching directory {base_path}")
 
@@ -71,14 +73,15 @@ class Handler(FileSystemEventHandler):
         print("Summaries: ", self.summaries)
         print("Events: ", self.events)
         files = self.callback(
-            summaries=self.summaries, fs_events=json.dumps(
-                {"files": self.events})
+            summaries=self.summaries,
+            fs_events=json.dumps({"files": self.events}),
+            instruction=self.instruction,
         )
 
         self.queue.put(files)
 
 
-def create_file_tree(summaries, fs_events):
+def create_file_tree(summaries, fs_events, instruction: Optional[str] = None):
 
     FILE_PROMPT = """
 You will be provided with list of source files and a summary of their contents. For each file, propose a new path and filename, using a directory structure that optimally organizes the files using known conventions and best practices.
@@ -97,6 +100,9 @@ Your response must be a JSON object with the following schema:
 }
 ```
 """.strip()
+
+    if instruction:
+        FILE_PROMPT += f"\n\nUser instructions: {instruction}"
 
     WATCH_PROMPT = f"""
 Here are a few examples of good file naming conventions to emulate, based on the files provided:

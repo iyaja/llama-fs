@@ -20,6 +20,12 @@ import llamaFsLogo from '../../../assets/llama_fs.png'
 
 const supportedFileTypes = ['.pdf', '.txt', '.png', '.jpg', '.jpeg', '.pptx', '.docx', '.xlsx'];
 
+const INSTRUCTION_PRESETS = [
+  { label: '按文件类型整理', value: 'Organize files by their type/extension into clearly named folders (e.g. images, documents, code).' },
+  { label: '照片按日期归档', value: 'Organize photos and images by date (year/month) using file creation or metadata dates.' },
+  { label: '代码文件按项目整理', value: 'Organize code files by project or repository, grouping related source files together.' },
+];
+
 function preorderTraversal(
   node: { name: string; children?: any[]; summary?: string; src_path?: string },
   prevfilename: string,
@@ -60,10 +66,8 @@ function buildTree(paths) {
 
       if (!existingPath) {
         if (index === parts.length - 1) {
-          // It's a file, include the summary and source path
           existingPath = { name: part, summary: summary, src_path: src_path };
         } else {
-          // It's a directory
           existingPath = { name: part, children: [] };
         }
         currentLevel.push(existingPath);
@@ -84,15 +88,14 @@ function MainScreen() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePath, setFilePath] = useState('/Users/reibs/Projects/llama-fs/sample_data');
   const [loading, setLoading] = useState(false);
+  const [instruction, setInstruction] = useState('');
 
-  // Function to handle file selection
   const handleFileSelect = (fileData: any) => {
     setSelectedFile(fileData);
   };
 
   const [newOldMap, setNewOldMap] = useState([]);
   const [preOrderedFiles, setPreOrderedFiles] = useState([]);
-  // const preOrderedFiles = preorderTraversal(files, '', -1).slice(1);
   const [acceptedState, setAcceptedState] = React.useState([]);
 
   const handleBatch = async () => {
@@ -103,8 +106,8 @@ function MainScreen() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        path: filePath
-        // path: '/Users/reibs/Projects/llama-fs/sample_data',
+        path: filePath,
+        instruction: instruction || undefined,
       }),
     });
     const data = await response.json();
@@ -120,6 +123,7 @@ function MainScreen() {
     );
     setLoading(false);
   };
+
   const handleWatch = async () => {
     setLoading(true);
     const response = await fetch('http://localhost:8000/batch', {
@@ -128,8 +132,8 @@ function MainScreen() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        path: filePath
-        // path: '/Users/reibs/Projects/llama-fs/sample_data',
+        path: filePath,
+        instruction: instruction || undefined,
       }),
     });
   };
@@ -156,7 +160,6 @@ function MainScreen() {
 
     console.log(returnedObj)
 
-    // commit endpoint only supports 1 change at a time
     returnedObj.forEach(async (change) => {
       const response = await fetch('http://localhost:8000/commit', {
         method: 'POST',
@@ -168,13 +171,11 @@ function MainScreen() {
       console.log(response);
     });
 
-    // clean objects
     setNewOldMap([]);
     setPreOrderedFiles([]);
     setAcceptedState([]);
   };
 
-  // Add the className 'dark' to main div to enable dark mode
   return (
     <div className="flex h-screen w-full">
       <div className="bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-4">
@@ -220,13 +221,36 @@ function MainScreen() {
             </div>
           </div>
         </div>
+        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Custom instructions (optional)
+          </label>
+          <textarea
+            className="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 p-2 text-sm"
+            rows={2}
+            placeholder="e.g. Organize code files by project..."
+            value={instruction}
+            onChange={(e) => setInstruction(e.target.value)}
+          />
+          <div className="flex gap-2 mt-2 flex-wrap">
+            {INSTRUCTION_PRESETS.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => setInstruction(preset.value)}
+                className="text-xs px-2 py-1 rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="flex-1 flex">
           <div
             className="w-1/2 overflow-auto p-4 space-y-2 border-r border-gray-200 dark:border-gray-700"
             style={{ maxHeight: 'calc(100vh - 4rem)' }}
           >
             {loading ? (
-              // Existing loading block
               <div className="flex flex-col items-center">
                 <h2 className="text-lg font-semibold mb-2">Reading and classifying your files...</h2>
                 <div className="flex justify-center" style={{ width: '50%' }}>
@@ -234,7 +258,6 @@ function MainScreen() {
                 </div>
               </div>
             ) : preOrderedFiles.length === 0 ? (
-              // Render llamaFsLogo and supported file types when not loading and no files
               <div className="flex flex-col items-center" style={{ height: '100%' }}>
                 <h1 className="text-lg font-semibold mb-2">Llama-FS</h1>
                 <p>Organize your drive with LLMs. </p>
@@ -249,7 +272,6 @@ function MainScreen() {
                 </ul>
               </div>
             ) : (
-              // Existing file details block
               <FileDetails fileData={selectedFile} />
             )}
             {preOrderedFiles.map((file) => (
@@ -267,8 +289,6 @@ function MainScreen() {
           </div>
           <div className="w-1/2 overflow-auto p-4">
             <FileDetails fileData={selectedFile} />
-            {/* Container for explaining the data in the file line that's selected */}
-            {/* This container will be populated with content dynamically based on the selected FileLine */}
           </div>
         </div>
       </div>
